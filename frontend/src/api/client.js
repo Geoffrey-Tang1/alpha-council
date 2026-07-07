@@ -14,6 +14,10 @@ async function request(path, options = {}) {
     throw new Error(error?.detail || error?.error?.message || `Request failed: ${response.status}`);
   }
 
+  if (response.status === 204) {
+    return null;
+  }
+
   return response.json();
 }
 
@@ -25,6 +29,30 @@ export function getMarketStatus() {
   return request("/market-status");
 }
 
+export function getWatchlist() {
+  return request("/watchlist");
+}
+
+export function addWatchlistItem(payload) {
+  return request("/watchlist", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateWatchlistItem(id, payload) {
+  return request(`/watchlist/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteWatchlistItem(id) {
+  return request(`/watchlist/${id}`, {
+    method: "DELETE"
+  });
+}
+
 export function runAnalysis(payload) {
   return request("/analysis/run", {
     method: "POST",
@@ -34,4 +62,8 @@ export function runAnalysis(payload) {
 
 export function getDecisions() {
   return request("/decisions");
+}
+
+export function getDecision(decisionId) {
+  return request(`/decisions/${decisionId}`);
 }

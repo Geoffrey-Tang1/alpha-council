@@ -60,4 +60,33 @@ def initialize_database(database_url: str | None = None) -> None:
             ON decisions (final_decision)
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS watchlist_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticker TEXT NOT NULL,
+                market TEXT NOT NULL,
+                company_name TEXT,
+                notes TEXT,
+                latest_signal TEXT,
+                latest_risk_level TEXT,
+                latest_price REAL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                UNIQUE(ticker, market)
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_watchlist_ticker_market
+            ON watchlist_items (ticker, market)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_watchlist_updated_at
+            ON watchlist_items (updated_at)
+            """
+        )
         connection.commit()

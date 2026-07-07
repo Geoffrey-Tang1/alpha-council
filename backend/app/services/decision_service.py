@@ -12,3 +12,6 @@ class DecisionService:
     def list_decisions(self, limit: int = 100) -> DecisionListResponse:
         items = self.repository.list(limit=limit)
         return DecisionListResponse(items=items, total=len(items))
+
+    def get_decision(self, decision_id: str) -> DecisionResponse | None:
+        return self.repository.get_by_id(decision_id)

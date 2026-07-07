@@ -90,7 +90,72 @@ export default function StockAnalysisPage() {
 
       {decision && (
         <div className="analysis-results">
+          <Card>
+            <h3>Data Quality</h3>
+            <p>{decision.data_disclaimer}</p>
+            <p className="muted">
+              Provider: {decision.data_quality.provider} · Quality: {decision.data_quality.quality} · Mock:{" "}
+              {decision.data_quality.is_mock ? "yes" : "no"}
+            </p>
+          </Card>
           <DecisionCard decision={decision} />
+          <div className="agent-grid">
+            <SpecialistAgentCard
+              title="Technical Analysis"
+              signal={decision.agent_outputs.technical_analysis.technical_signal}
+              confidence={decision.agent_outputs.technical_analysis.confidence}
+              explanation={decision.agent_outputs.technical_analysis.explanation}
+              details={decision.agent_outputs.technical_analysis.key_indicators}
+              risks={decision.agent_outputs.technical_analysis.risks}
+            />
+            <SpecialistAgentCard
+              title="Fundamental Analysis"
+              signal={decision.agent_outputs.fundamental_analysis.fundamental_signal}
+              confidence={decision.agent_outputs.fundamental_analysis.confidence}
+              explanation={decision.agent_outputs.fundamental_analysis.explanation}
+              details={decision.agent_outputs.fundamental_analysis.key_metrics}
+              risks={decision.agent_outputs.fundamental_analysis.risks}
+            />
+            <SpecialistAgentCard
+              title="News and Sentiment"
+              signal={decision.agent_outputs.news_sentiment.sentiment_signal}
+              confidence={decision.agent_outputs.news_sentiment.confidence}
+              explanation={decision.agent_outputs.news_sentiment.explanation}
+              details={{ catalysts: decision.agent_outputs.news_sentiment.catalysts.join(", ") }}
+              risks={decision.agent_outputs.news_sentiment.risks}
+            />
+            <SpecialistAgentCard
+              title="Macro and Cross-Market"
+              signal={decision.agent_outputs.macro_cross_market.macro_signal}
+              confidence={decision.agent_outputs.macro_cross_market.confidence}
+              explanation={decision.agent_outputs.macro_cross_market.explanation}
+              details={{ factors: decision.agent_outputs.macro_cross_market.macro_factors.join(", ") }}
+              risks={decision.agent_outputs.macro_cross_market.risks}
+            />
+            <SpecialistAgentCard
+              title="Risk Manager"
+              signal={decision.agent_outputs.risk_manager.risk_level}
+              confidence={Math.max(0, Math.min(1, 0.7 + decision.agent_outputs.risk_manager.confidence_adjustment))}
+              explanation={decision.agent_outputs.risk_manager.veto ? decision.agent_outputs.risk_manager.veto_reason : "Risk controls passed without a BUY veto."}
+              details={{
+                max_position_size_pct: decision.agent_outputs.risk_manager.max_position_size_pct,
+                stop_loss_required: decision.agent_outputs.risk_manager.stop_loss_required ? "yes" : "no",
+                veto: decision.agent_outputs.risk_manager.veto ? "yes" : "no"
+              }}
+              risks={decision.agent_outputs.risk_manager.risk_warnings}
+            />
+            <SpecialistAgentCard
+              title="Portfolio Manager"
+              signal={decision.agent_outputs.portfolio_manager.portfolio_fit}
+              confidence={0.6}
+              explanation={decision.agent_outputs.portfolio_manager.explanation}
+              details={{
+                recommended_position_size_pct: decision.agent_outputs.portfolio_manager.recommended_position_size_pct,
+                concentration_warning: decision.agent_outputs.portfolio_manager.concentration_warning || "none"
+              }}
+              risks={decision.agent_outputs.portfolio_manager.concentration_warning ? [decision.agent_outputs.portfolio_manager.concentration_warning] : []}
+            />
+          </div>
           <RiskPanel
             warnings={decision.risk_warnings}
             invalidationConditions={decision.invalidation_conditions}
@@ -131,5 +196,35 @@ export default function StockAnalysisPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SpecialistAgentCard({ title, signal, confidence, explanation, details = {}, risks = [] }) {
+  return (
+    <Card>
+      <div className="card-row">
+        <h3>{title}</h3>
+        <strong>{signal}</strong>
+      </div>
+      <p>{explanation}</p>
+      <p className="muted">Confidence: {formatConfidence(confidence)}</p>
+      {Object.keys(details).length > 0 && (
+        <dl className="detail-list">
+          {Object.entries(details).map(([key, value]) => (
+            <div key={key}>
+              <dt>{key}</dt>
+              <dd>{String(value ?? "N/A")}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {risks.length > 0 && (
+        <ul className="stack-list">
+          {risks.map((risk) => (
+            <li key={risk}>{risk}</li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }

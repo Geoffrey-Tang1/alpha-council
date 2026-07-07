@@ -115,6 +115,7 @@ class MockDataProvider(MarketDataProvider):
         return {
             "provider_name": self.provider_name,
             "status": "OK",
+            "quality": "mock",
             "message": "Deterministic mock provider is available.",
             "is_mock": True,
         }

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field
 
 from app.core.constants import DecisionAction, MarketCode, MarketStatus
-from app.schemas.agents import AgentVoteOutput, BearCaseOutput, BullCaseOutput
-from app.schemas.common import DataSource
+from app.schemas.agents import AgentOutputs, AgentVoteOutput, BearCaseOutput, BullCaseOutput
+from app.schemas.common import DataQuality, DataSource
 
 
 class DecisionResponse(BaseModel):
@@ -23,8 +23,11 @@ class DecisionResponse(BaseModel):
     risk_warnings: list[str]
     invalidation_conditions: list[str]
     agent_votes: list[AgentVoteOutput]
+    agent_outputs: AgentOutputs
     final_explanation: str
     data_sources: list[DataSource]
+    data_quality: DataQuality
+    data_disclaimer: str
     timestamp: str
     saved: bool
 

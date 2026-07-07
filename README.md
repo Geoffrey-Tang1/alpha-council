@@ -27,7 +27,10 @@ The frontend is a lightweight React/Vite app with:
 
 - Dashboard
 - Stock Analysis
+- Watchlist
+- Backtest form shell
 - Decision Log
+- Decision Detail payload inspection
 
 ## macOS Prerequisites
 
@@ -115,8 +118,14 @@ kill -9 <PID>
 | --- | --- | --- |
 | GET | `/api/v1/health` | Backend health check. |
 | GET | `/api/v1/market-status` | US, JP, TW, and KR market status. |
+| GET | `/api/v1/watchlist` | List saved watchlist items. |
+| POST | `/api/v1/watchlist` | Add a watchlist item. |
+| GET | `/api/v1/watchlist/{id}` | Read one watchlist item. |
+| PATCH | `/api/v1/watchlist/{id}` | Update watchlist metadata. |
+| DELETE | `/api/v1/watchlist/{id}` | Remove a watchlist item. |
 | POST | `/api/v1/analysis/run` | Run deterministic mock multi-agent analysis and save the decision. |
 | GET | `/api/v1/decisions` | List saved decisions from SQLite. |
+| GET | `/api/v1/decisions/{decision_id}` | Inspect one saved decision payload. |
 
 Example analysis request:
 

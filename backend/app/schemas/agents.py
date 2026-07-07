@@ -67,6 +67,15 @@ class PortfolioManagerOutput(BaseModel):
     explanation: str
 
 
+class AgentOutputs(BaseModel):
+    technical_analysis: TechnicalAnalysisOutput
+    fundamental_analysis: FundamentalAnalysisOutput
+    news_sentiment: NewsSentimentOutput
+    macro_cross_market: MacroAnalysisOutput
+    risk_manager: RiskManagerOutput
+    portfolio_manager: PortfolioManagerOutput
+
+
 class AgentVoteOutput(BaseModel):
     agent: str
     vote: DecisionAction

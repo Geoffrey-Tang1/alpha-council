@@ -4,6 +4,7 @@ from uuid import uuid4
 from app.agents.base import BaseAgent
 from app.core.constants import AgentSignal, DecisionAction
 from app.schemas.agents import (
+    AgentOutputs,
     AgentVoteOutput,
     BearCaseOutput,
     BullCaseOutput,
@@ -14,7 +15,7 @@ from app.schemas.agents import (
     RiskManagerOutput,
     TechnicalAnalysisOutput,
 )
-from app.schemas.common import DataSource
+from app.schemas.common import DataQuality, DataSource
 from app.schemas.decisions import DecisionResponse
 
 
@@ -72,6 +73,18 @@ class DecisionCommitteeAgent(BaseAgent):
         if portfolio.concentration_warning:
             risk_warnings.append(portfolio.concentration_warning)
 
+        data_source_status = collected_data["data_source_status"]
+        data_disclaimer = "MVP Mode: using mock data. Not real market data."
+        data_quality = DataQuality(
+            provider=data_source_status["provider_name"],
+            is_mock=bool(data_source_status.get("is_mock", False)),
+            quality=data_source_status.get("quality", "unknown"),
+            warnings=[
+                data_disclaimer,
+                "Phase 2 does not connect to paid APIs, brokers, or live execution.",
+            ],
+        )
+
         return DecisionResponse(
             decision_id=f"dec_{uuid4().hex}",
             ticker=collected_data["ticker"],
@@ -90,14 +103,24 @@ class DecisionCommitteeAgent(BaseAgent):
             risk_warnings=risk_warnings,
             invalidation_conditions=self._invalidation_conditions(stop_loss),
             agent_votes=agent_votes,
+            agent_outputs=AgentOutputs(
+                technical_analysis=technical,
+                fundamental_analysis=fundamental,
+                news_sentiment=news,
+                macro_cross_market=macro,
+                risk_manager=risk,
+                portfolio_manager=portfolio,
+            ),
             final_explanation=self._final_explanation(final_decision, risk),
             data_sources=[
                 DataSource(
-                    name=collected_data["data_source_status"]["provider_name"],
+                    name=data_source_status["provider_name"],
                     type="market_data",
-                    status=collected_data["data_source_status"]["status"],
+                    status=data_source_status["status"],
                 )
             ],
+            data_quality=data_quality,
+            data_disclaimer=data_disclaimer,
             timestamp=datetime.now(timezone.utc).isoformat(),
             saved=False,
         )

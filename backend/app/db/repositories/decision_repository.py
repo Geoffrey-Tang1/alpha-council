@@ -63,4 +63,97 @@ class DecisionRepository:
                 (limit,),
             ).fetchall()
 
-        return [DecisionResponse.model_validate(json.loads(row["full_payload_json"])) for row in rows]
+        return [self._payload_to_decision(row["full_payload_json"]) for row in rows]
+
+    def get_by_id(self, decision_id: str) -> DecisionResponse | None:
+        with get_connection() as connection:
+            row = connection.execute(
+                """
+                SELECT full_payload_json
+                FROM decisions
+                WHERE decision_id = ?
+                """,
+                (decision_id,),
+            ).fetchone()
+
+        if row is None:
+            return None
+        return self._payload_to_decision(row["full_payload_json"])
+
+    def _payload_to_decision(self, raw_payload: str) -> DecisionResponse:
+        payload = json.loads(raw_payload)
+        return DecisionResponse.model_validate(self._normalize_legacy_payload(payload))
+
+    def _normalize_legacy_payload(self, payload: dict) -> dict:
+        if "data_disclaimer" not in payload:
+            payload["data_disclaimer"] = "MVP Mode: using mock data. Not real market data."
+
+        if "data_quality" not in payload:
+            provider = "mock_provider"
+            data_sources = payload.get("data_sources") or []
+            if data_sources:
+                provider = data_sources[0].get("name", provider)
+            payload["data_quality"] = {
+                "provider": provider,
+                "is_mock": True,
+                "quality": "legacy_mock",
+                "warnings": [
+                    "MVP Mode: using mock data. Not real market data.",
+                    "Legacy Phase 1 payload did not store full Phase 2 data quality metadata.",
+                ],
+            }
+
+        if "agent_outputs" not in payload:
+            payload["agent_outputs"] = self._legacy_agent_outputs(payload)
+
+        return payload
+
+    def _legacy_agent_outputs(self, payload: dict) -> dict:
+        legacy_explanation = "Legacy Phase 1 payload did not store this full agent output."
+        legacy_risks = ["Legacy payload; inspect agent votes and final explanation for available context."]
+        return {
+            "technical_analysis": {
+                "technical_signal": "WATCH",
+                "confidence": payload.get("confidence", 0.5),
+                "explanation": legacy_explanation,
+                "key_indicators": {},
+                "risks": legacy_risks,
+            },
+            "fundamental_analysis": {
+                "fundamental_signal": "WATCH",
+                "confidence": payload.get("confidence", 0.5),
+                "explanation": legacy_explanation,
+                "key_metrics": {},
+                "risks": legacy_risks,
+            },
+            "news_sentiment": {
+                "sentiment_signal": "WATCH",
+                "confidence": payload.get("confidence", 0.5),
+                "explanation": legacy_explanation,
+                "catalysts": [],
+                "risks": legacy_risks,
+                "data_sources": ["legacy_payload"],
+            },
+            "macro_cross_market": {
+                "macro_signal": "WATCH",
+                "confidence": payload.get("confidence", 0.5),
+                "explanation": legacy_explanation,
+                "macro_factors": [],
+                "risks": legacy_risks,
+            },
+            "risk_manager": {
+                "risk_level": "UNKNOWN",
+                "max_position_size_pct": payload.get("max_position_size_pct", 0),
+                "stop_loss_required": True,
+                "risk_warnings": payload.get("risk_warnings", legacy_risks),
+                "veto": payload.get("decision") == "BUY" and payload.get("stop_loss") is None,
+                "veto_reason": None,
+                "confidence_adjustment": 0,
+            },
+            "portfolio_manager": {
+                "portfolio_fit": "legacy_unknown",
+                "recommended_position_size_pct": payload.get("max_position_size_pct", 0),
+                "concentration_warning": None,
+                "explanation": legacy_explanation,
+            },
+        }

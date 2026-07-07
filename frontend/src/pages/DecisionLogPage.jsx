@@ -4,7 +4,7 @@ import { getDecisions } from "../api/client.js";
 import Card from "../components/ui/Card.jsx";
 import { formatConfidence, formatDateTime, formatPrice } from "../utils/formatting.js";
 
-export default function DecisionLogPage() {
+export default function DecisionLogPage({ onSelectDecision }) {
   const [decisions, setDecisions] = useState([]);
   const [error, setError] = useState("");
 
@@ -37,6 +37,7 @@ export default function DecisionLogPage() {
               <th>Confidence</th>
               <th>Latest Price</th>
               <th>Explanation</th>
+              <th>Inspect</th>
             </tr>
           </thead>
           <tbody>
@@ -49,11 +50,16 @@ export default function DecisionLogPage() {
                 <td>{formatConfidence(item.confidence)}</td>
                 <td>{formatPrice(item.latest_price)}</td>
                 <td>{item.final_explanation}</td>
+                <td>
+                  <button className="link-button" onClick={() => onSelectDecision(item.decision_id)}>
+                    Open payload
+                  </button>
+                </td>
               </tr>
             ))}
             {decisions.length === 0 && (
               <tr>
-                <td colSpan="7" className="empty-cell">No decisions saved yet.</td>
+                <td colSpan="8" className="empty-cell">No decisions saved yet.</td>
               </tr>
             )}
           </tbody>

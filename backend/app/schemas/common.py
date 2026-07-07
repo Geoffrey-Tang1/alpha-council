@@ -21,6 +21,13 @@ class DataSource(BaseModel):
     status: str
 
 
+class DataQuality(BaseModel):
+    provider: str
+    is_mock: bool
+    quality: str
+    warnings: list[str]
+
+
 class AgentVote(BaseModel):
     agent: str
     vote: DecisionAction
