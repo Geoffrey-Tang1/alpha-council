@@ -29,6 +29,10 @@ export function getMarketStatus() {
   return request("/market-status");
 }
 
+export function getDataSourceStatus() {
+  return request("/data-sources/status");
+}
+
 export function getWatchlist() {
   return request("/watchlist");
 }

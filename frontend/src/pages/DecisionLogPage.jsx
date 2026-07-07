@@ -34,6 +34,8 @@ export default function DecisionLogPage({ onSelectDecision }) {
               <th>Ticker</th>
               <th>Market</th>
               <th>Decision</th>
+              <th>Provider</th>
+              <th>Data</th>
               <th>Confidence</th>
               <th>Latest Price</th>
               <th>Explanation</th>
@@ -47,6 +49,8 @@ export default function DecisionLogPage({ onSelectDecision }) {
                 <td>{item.ticker}</td>
                 <td>{item.market}</td>
                 <td>{item.decision}</td>
+                <td>{item.data_provider || "mock"}</td>
+                <td>{item.data_quality || "MOCK"}</td>
                 <td>{formatConfidence(item.confidence)}</td>
                 <td>{formatPrice(item.latest_price)}</td>
                 <td>{item.final_explanation}</td>
@@ -59,7 +63,7 @@ export default function DecisionLogPage({ onSelectDecision }) {
             ))}
             {decisions.length === 0 && (
               <tr>
-                <td colSpan="8" className="empty-cell">No decisions saved yet.</td>
+                <td colSpan="10" className="empty-cell">No decisions saved yet.</td>
               </tr>
             )}
           </tbody>

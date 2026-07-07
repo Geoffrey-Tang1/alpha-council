@@ -2,13 +2,13 @@
 
 AlphaCouncil is a multi-agent global equity trading decision platform for research, signal review, risk control, backtesting preparation, and decision logging.
 
-This Phase 1 MVP is a clean local skeleton. It includes a FastAPI backend, React + Vite frontend, SQLite-backed decision history, deterministic mock data, market status logic, and a mock multi-agent analysis workflow.
+This MVP includes a FastAPI backend, React + Vite frontend, SQLite-backed decision history, deterministic mock data, market status logic, and an optional yfinance market-data provider.
 
 Suggested repository name: `alpha-council`
 
 ## MVP Boundary
 
-AlphaCouncil Phase 1 is research support only.
+AlphaCouncil is research support only.
 
 - No live trading.
 - No broker integration.
@@ -21,7 +21,7 @@ The app generates research decisions only: `BUY`, `SELL`, `HOLD`, `WATCH`, and `
 
 ## Architecture Summary
 
-The backend exposes `/api/v1` endpoints through FastAPI. A mock data provider feeds deterministic price, company, news, fundamentals, and macro data into the agent workflow. The Decision Committee combines agent outputs, applies Risk Manager veto rules, saves the final decision to SQLite, and returns a structured response to the frontend.
+The backend exposes `/api/v1` endpoints through FastAPI. The data provider layer can use deterministic mock data or optional yfinance market data. The Decision Committee combines agent outputs, applies Risk Manager veto rules, saves the final decision to SQLite, and returns a structured response to the frontend.
 
 The frontend is a lightweight React/Vite app with:
 
@@ -52,6 +52,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
+
+`requirements.txt` includes `yfinance`, so the same install command prepares both mock mode and optional yfinance mode.
 
 ## Run Backend
 
@@ -118,6 +120,7 @@ kill -9 <PID>
 | --- | --- | --- |
 | GET | `/api/v1/health` | Backend health check. |
 | GET | `/api/v1/market-status` | US, JP, TW, and KR market status. |
+| GET | `/api/v1/data-sources/status` | Active data provider and quality warning. |
 | GET | `/api/v1/watchlist` | List saved watchlist items. |
 | POST | `/api/v1/watchlist` | Add a watchlist item. |
 | GET | `/api/v1/watchlist/{id}` | Read one watchlist item. |
@@ -149,6 +152,22 @@ DATA_PROVIDER=mock
 ENABLE_LIVE_TRADING=false
 ```
 
+Provider options:
+
+```text
+DATA_PROVIDER=mock
+DATA_PROVIDER=yfinance
+```
+
+Ticker examples for yfinance mode:
+
+| Market | Examples |
+| --- | --- |
+| US | `NVDA`, `AAPL`, `TSLA` |
+| Japan | `7203` or `7203.T` |
+| Taiwan | `2330` or `2330.TW` |
+| Korea | `005930` or `005930.KS` |
+
 Do not commit `.env`.
 
 ## macOS Troubleshooting
@@ -166,4 +185,4 @@ Do not commit `.env`.
 
 ## Risk Disclaimer
 
-AlphaCouncil Phase 1 uses mock data and deterministic placeholder logic. It is not financial advice, does not guarantee outcomes, and does not execute trades. Always verify market data, liquidity, risk, and suitability independently before making investment decisions.
+AlphaCouncil may use deterministic mock data or yfinance market data depending on `DATA_PROVIDER`. yfinance data may be delayed, incomplete, adjusted, or unavailable and is not suitable for guaranteed trading decisions. AlphaCouncil is not financial advice, does not guarantee outcomes, and does not execute trades. Always verify market data, liquidity, risk, and suitability independently before making investment decisions.

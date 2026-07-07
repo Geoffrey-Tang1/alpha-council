@@ -15,7 +15,7 @@ from app.schemas.agents import (
     RiskManagerOutput,
     TechnicalAnalysisOutput,
 )
-from app.schemas.common import DataQuality, DataSource
+from app.schemas.common import DataSource
 from app.schemas.decisions import DecisionResponse
 
 
@@ -40,11 +40,12 @@ class DecisionCommitteeAgent(BaseAgent):
         take_profit = round(latest_price * 1.1, 2) if latest_price else None
 
         base_decision = self._base_decision(technical, fundamental, news, macro)
-        if risk.veto and base_decision == DecisionAction.BUY:
-            final_decision = DecisionAction.WATCH
-        elif risk.veto:
+        raw_data_quality = str(collected_data.get("data_source_status", {}).get("quality", "UNAVAILABLE")).upper()
+        if risk.veto and raw_data_quality == "UNAVAILABLE":
             final_decision = DecisionAction.AVOID
-        elif collected_data.get("data_source_status", {}).get("is_mock"):
+        elif risk.veto:
+            final_decision = DecisionAction.WATCH
+        elif raw_data_quality in {"MOCK", "DEGRADED"}:
             final_decision = DecisionAction.WATCH
         else:
             final_decision = base_decision
@@ -74,16 +75,13 @@ class DecisionCommitteeAgent(BaseAgent):
             risk_warnings.append(portfolio.concentration_warning)
 
         data_source_status = collected_data["data_source_status"]
-        data_disclaimer = "MVP Mode: using mock data. Not real market data."
-        data_quality = DataQuality(
-            provider=data_source_status["provider_name"],
-            is_mock=bool(data_source_status.get("is_mock", False)),
-            quality=data_source_status.get("quality", "unknown"),
-            warnings=[
-                data_disclaimer,
-                "Phase 2 does not connect to paid APIs, brokers, or live execution.",
-            ],
-        )
+        data_provider = data_source_status.get("provider_name", "mock")
+        data_quality = data_source_status.get("quality", "UNAVAILABLE").upper()
+        data_disclaimer = self._data_disclaimer(data_provider=data_provider, data_quality=data_quality)
+        data_warnings = [
+            data_disclaimer,
+            *data_source_status.get("warnings", []),
+        ]
 
         return DecisionResponse(
             decision_id=f"dec_{uuid4().hex}",
@@ -114,13 +112,15 @@ class DecisionCommitteeAgent(BaseAgent):
             final_explanation=self._final_explanation(final_decision, risk),
             data_sources=[
                 DataSource(
-                    name=data_source_status["provider_name"],
+                    name=data_provider,
                     type="market_data",
-                    status=data_source_status["status"],
+                    status=data_source_status.get("status", data_quality),
                 )
             ],
+            data_provider=data_provider,
             data_quality=data_quality,
             data_disclaimer=data_disclaimer,
+            data_warnings=list(dict.fromkeys(data_warnings)),
             timestamp=datetime.now(timezone.utc).isoformat(),
             saved=False,
         )
@@ -199,5 +199,14 @@ class DecisionCommitteeAgent(BaseAgent):
         if risk.veto:
             return f"Risk Manager veto applied: {risk.veto_reason}"
         if decision == DecisionAction.WATCH:
-            return "Specialist evidence is not strong enough for a BUY under Phase 1 mock-data conditions."
+            return "Specialist evidence or data-quality controls are not strong enough for a BUY."
         return "Decision Committee combined specialist agents and risk controls into the final decision."
+
+    def _data_disclaimer(self, data_provider: str, data_quality: str) -> str:
+        if data_provider == "mock" or data_quality == "MOCK":
+            return "MVP Mode: using deterministic mock data. Not real market data."
+        if data_provider == "yfinance" and data_quality == "REAL":
+            return "Market data provided by yfinance. Data may be delayed, incomplete, or adjusted. Not financial advice."
+        if data_quality == "DEGRADED":
+            return "Market data provider degraded. Some data may be incomplete or fallback mock data. Not financial advice."
+        return "Market data unavailable. AlphaCouncil cannot validate this decision. Not financial advice."

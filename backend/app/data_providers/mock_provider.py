@@ -11,7 +11,10 @@ from app.data_providers.base import MarketDataProvider
 class MockDataProvider(MarketDataProvider):
     """Deterministic local provider used for Phase 1 development and tests."""
 
-    provider_name = "mock_provider"
+    provider_name = "mock"
+
+    def __init__(self, registry_warnings: list[str] | None = None) -> None:
+        self.registry_warnings = registry_warnings or []
 
     def _seed(self, ticker: str, market: MarketCode) -> int:
         key = f"{ticker.upper()}:{market.value}".encode("utf-8")
@@ -115,7 +118,11 @@ class MockDataProvider(MarketDataProvider):
         return {
             "provider_name": self.provider_name,
             "status": "OK",
-            "quality": "mock",
+            "quality": "MOCK",
             "message": "Deterministic mock provider is available.",
             "is_mock": True,
+            "warnings": [
+                "MVP Mode: using deterministic mock data. Not real market data.",
+                *self.registry_warnings,
+            ],
         }

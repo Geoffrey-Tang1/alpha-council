@@ -22,19 +22,25 @@ class TechnicalAnalysisAgent(BaseAgent):
 
         closes = history["close"].astype(float)
         returns = closes.pct_change().dropna()
-        sma_20 = float(closes.rolling(20).mean().iloc[-1])
-        sma_50 = float(closes.rolling(50).mean().iloc[-1])
+        sma_20 = float(closes.rolling(20).mean().iloc[-1]) if len(closes) >= 20 else None
+        sma_50 = float(closes.rolling(50).mean().iloc[-1]) if len(closes) >= 50 else None
         rsi_14 = self._rsi(closes, period=14)
         macd = self._macd(closes)
         volatility_20d = float(returns.tail(20).std() * np.sqrt(252)) if len(returns) >= 20 else None
 
         risks: list[str] = []
+        if len(closes) < 50:
+            risks.append("Price history is too short for full 20/50-day technical confirmation.")
         if volatility_20d is not None and volatility_20d > 0.35:
             risks.append("20-day annualized volatility is elevated.")
         if rsi_14 is not None and rsi_14 > 70:
             risks.append("RSI is overbought.")
 
-        if sma_20 > sma_50 and (rsi_14 or 50) < 72:
+        if sma_20 is None or sma_50 is None:
+            signal = AgentSignal.WATCH
+            explanation = "Price history is too short for a reliable technical signal."
+            confidence = 0.3
+        elif sma_20 > sma_50 and (rsi_14 or 50) < 72:
             signal = AgentSignal.BUY
             explanation = "Short-term trend is above the medium-term trend with acceptable momentum."
             confidence = 0.66
@@ -52,8 +58,8 @@ class TechnicalAnalysisAgent(BaseAgent):
             confidence=confidence,
             explanation=explanation,
             key_indicators={
-                "sma_20": round(sma_20, 2),
-                "sma_50": round(sma_50, 2),
+                "sma_20": round(sma_20, 2) if sma_20 is not None else None,
+                "sma_50": round(sma_50, 2) if sma_50 is not None else None,
                 "rsi_14": round(rsi_14, 2) if rsi_14 is not None else None,
                 "macd": round(macd, 4) if macd is not None else None,
                 "volatility_20d": round(volatility_20d, 4) if volatility_20d is not None else None,

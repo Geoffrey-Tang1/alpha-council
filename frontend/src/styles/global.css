@@ -75,6 +75,13 @@ select {
   font-weight: 700;
 }
 
+.provider-banner {
+  background: #ecfeff;
+  border-color: #67e8f9;
+  color: #155e75;
+  font-weight: 600;
+}
+
 .page {
   max-width: 1180px;
   margin: 0 auto;
@@ -201,6 +208,13 @@ select {
   background: #fee2e2;
 }
 
+.decision-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .market-grid,
 .dashboard-band,
 .two-column {
@@ -289,6 +303,10 @@ select {
 .stack-list {
   padding-left: 18px;
   line-height: 1.6;
+}
+
+.warning-list {
+  color: #92400e;
 }
 
 .subtle-list {

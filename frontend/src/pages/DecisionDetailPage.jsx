@@ -52,9 +52,15 @@ export default function DecisionDetailPage({ decisionId, onBack }) {
               <h3>Data Quality</h3>
               <p>{decision.data_disclaimer}</p>
               <p className="muted">
-                Provider: {decision.data_quality.provider} · Quality: {decision.data_quality.quality} · Mock:{" "}
-                {decision.data_quality.is_mock ? "yes" : "no"}
+                Provider: {decision.data_provider} · Quality: {decision.data_quality}
               </p>
+              {decision.data_warnings?.length > 0 && (
+                <ul className="stack-list warning-list">
+                  {decision.data_warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              )}
             </Card>
           </div>
           <RiskPanel

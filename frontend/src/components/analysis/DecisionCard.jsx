@@ -8,6 +8,12 @@ export default function DecisionCard({ decision }) {
   }
 
   const tone = decision.decision === "BUY" ? "success" : decision.decision === "AVOID" ? "danger" : "warning";
+  const dataTone =
+    decision.data_quality === "REAL"
+      ? "success"
+      : decision.data_quality === "UNAVAILABLE"
+        ? "danger"
+        : "warning";
 
   return (
     <Card className="decision-card">
@@ -16,7 +22,10 @@ export default function DecisionCard({ decision }) {
           <p className="eyebrow">{decision.ticker} · {decision.market}</p>
           <h2>{decision.decision}</h2>
         </div>
-        <Badge tone={tone}>{formatConfidence(decision.confidence)}</Badge>
+        <div className="decision-badges">
+          <Badge tone={dataTone}>{decision.data_quality}</Badge>
+          <Badge tone={tone}>{formatConfidence(decision.confidence)}</Badge>
+        </div>
       </div>
       <div className="metric-grid">
         <div>

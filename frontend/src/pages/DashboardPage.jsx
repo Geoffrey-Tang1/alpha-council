@@ -57,7 +57,7 @@ export default function DashboardPage({ onNavigate, onSelectDecision }) {
               <strong>{watchOrAvoidCount}</strong>
             </div>
           </div>
-          <p className="muted">Risk remains conservative while all market data is mocked.</p>
+          <p className="muted">Risk remains conservative when data is mock, degraded, or unavailable.</p>
         </Card>
         <Card>
           <h3>Quick Links</h3>
@@ -81,6 +81,7 @@ export default function DashboardPage({ onNavigate, onSelectDecision }) {
               <th>Ticker</th>
               <th>Market</th>
               <th>Decision</th>
+              <th>Data</th>
               <th>Confidence</th>
               <th>Inspect</th>
             </tr>
@@ -92,6 +93,7 @@ export default function DashboardPage({ onNavigate, onSelectDecision }) {
                 <td>{decision.ticker}</td>
                 <td>{decision.market}</td>
                 <td>{decision.decision}</td>
+                <td>{decision.data_quality || "MOCK"}</td>
                 <td>{formatConfidence(decision.confidence)}</td>
                 <td>
                   <Button onClick={() => onSelectDecision(decision.decision_id)}>Open</Button>
@@ -100,7 +102,7 @@ export default function DashboardPage({ onNavigate, onSelectDecision }) {
             ))}
             {decisions.length === 0 && (
               <tr>
-                <td colSpan="6" className="empty-cell">No saved decisions yet.</td>
+                <td colSpan="7" className="empty-cell">No saved decisions yet.</td>
               </tr>
             )}
           </tbody>

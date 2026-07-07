@@ -86,22 +86,26 @@ class DecisionRepository:
 
     def _normalize_legacy_payload(self, payload: dict) -> dict:
         if "data_disclaimer" not in payload:
-            payload["data_disclaimer"] = "MVP Mode: using mock data. Not real market data."
+            payload["data_disclaimer"] = "MVP Mode: using deterministic mock data. Not real market data."
 
-        if "data_quality" not in payload:
-            provider = "mock_provider"
+        if "data_provider" not in payload:
             data_sources = payload.get("data_sources") or []
-            if data_sources:
-                provider = data_sources[0].get("name", provider)
-            payload["data_quality"] = {
-                "provider": provider,
-                "is_mock": True,
-                "quality": "legacy_mock",
-                "warnings": [
-                    "MVP Mode: using mock data. Not real market data.",
-                    "Legacy Phase 1 payload did not store full Phase 2 data quality metadata.",
-                ],
-            }
+            source_provider = data_sources[0].get("name", "mock") if data_sources else "mock"
+            payload["data_provider"] = "mock" if source_provider == "mock_provider" else source_provider
+
+        legacy_quality = payload.get("data_quality")
+        if isinstance(legacy_quality, dict):
+            normalized_quality = str(legacy_quality.get("quality", "MOCK")).upper()
+            payload["data_quality"] = "MOCK" if "MOCK" in normalized_quality else normalized_quality
+            payload["data_warnings"] = legacy_quality.get("warnings", [])
+        elif "data_quality" not in payload:
+            payload["data_quality"] = "MOCK"
+
+        if "data_warnings" not in payload:
+            payload["data_warnings"] = [
+                payload["data_disclaimer"],
+                "Legacy payload did not store full Phase 3 data metadata.",
+            ]
 
         if "agent_outputs" not in payload:
             payload["agent_outputs"] = self._legacy_agent_outputs(payload)

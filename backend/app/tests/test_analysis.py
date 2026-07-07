@@ -20,9 +20,11 @@ def test_analysis_endpoint_returns_structured_saved_decision(client):
     assert body["bear_case"]["bear_points"]
     assert body["agent_votes"]
     assert body["agent_outputs"]["risk_manager"]["risk_warnings"]
-    assert body["data_quality"]["is_mock"] is True
-    assert body["data_disclaimer"] == "MVP Mode: using mock data. Not real market data."
-    assert body["data_sources"][0]["name"] == "mock_provider"
+    assert body["data_provider"] == "mock"
+    assert body["data_quality"] == "MOCK"
+    assert body["data_disclaimer"] == "MVP Mode: using deterministic mock data. Not real market data."
+    assert body["data_warnings"]
+    assert body["data_sources"][0]["name"] == "mock"
 
 
 def test_analysis_saves_decision_for_history(client):
