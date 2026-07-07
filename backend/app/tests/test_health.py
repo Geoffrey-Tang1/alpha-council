@@ -1,0 +1,9 @@
+def test_health_endpoint(client):
+    response = client.get("/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "service": "alphacouncil-api",
+        "version": "0.1.0",
+    }
