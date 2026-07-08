@@ -220,6 +220,7 @@ class YFinanceDataProvider(MarketDataProvider):
 
         normalized = history.reset_index()
         column_map = {
+            "index": "date",
             "Date": "date",
             "Datetime": "date",
             "Open": "open",
@@ -238,6 +239,7 @@ class YFinanceDataProvider(MarketDataProvider):
         normalized["date"] = pd.to_datetime(normalized["date"], errors="coerce").dt.date.astype(str)
         for column in ["open", "high", "low", "close", "volume"]:
             normalized[column] = pd.to_numeric(normalized[column], errors="coerce")
+        normalized = normalized[normalized["date"] != "NaT"]
         return normalized.dropna(subset=["close"]).reset_index(drop=True)
 
     def _fallback_history(self, ticker: str, market: MarketCode, warning: str) -> pd.DataFrame:

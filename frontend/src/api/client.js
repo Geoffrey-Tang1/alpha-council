@@ -71,3 +71,18 @@ export function getDecisions() {
 export function getDecision(decisionId) {
   return request(`/decisions/${decisionId}`);
 }
+
+export function runBacktest(payload) {
+  return request("/backtests/run", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getBacktests() {
+  return request("/backtests");
+}
+
+export function getBacktest(backtestId) {
+  return request(`/backtests/${backtestId}`);
+}

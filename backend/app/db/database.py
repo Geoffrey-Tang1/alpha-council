@@ -89,4 +89,46 @@ def initialize_database(database_url: str | None = None) -> None:
             ON watchlist_items (updated_at)
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS backtest_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                backtest_id TEXT NOT NULL UNIQUE,
+                ticker TEXT NOT NULL,
+                market TEXT NOT NULL,
+                strategy_name TEXT NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                initial_capital REAL NOT NULL,
+                transaction_cost_bps REAL NOT NULL,
+                slippage_bps REAL NOT NULL,
+                total_return REAL NOT NULL,
+                cagr REAL NOT NULL,
+                max_drawdown REAL NOT NULL,
+                win_rate REAL NOT NULL,
+                number_of_trades INTEGER NOT NULL,
+                average_trade_return REAL NOT NULL,
+                equity_curve_json TEXT NOT NULL,
+                trade_log_json TEXT NOT NULL,
+                warning_text TEXT NOT NULL,
+                data_provider TEXT NOT NULL,
+                data_quality TEXT NOT NULL,
+                data_disclaimer TEXT NOT NULL,
+                data_warnings_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_backtest_runs_ticker_market_created
+            ON backtest_runs (ticker, market, created_at)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_backtest_runs_strategy
+            ON backtest_runs (strategy_name)
+            """
+        )
         connection.commit()
