@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { runAnalysis } from "../api/client.js";
 import AgentOpinionCard from "../components/analysis/AgentOpinionCard.jsx";
 import DecisionCard from "../components/analysis/DecisionCard.jsx";
+import LLMResearchMemo from "../components/analysis/LLMResearchMemo.jsx";
 import RiskPanel from "../components/analysis/RiskPanel.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
@@ -113,6 +114,7 @@ export default function StockAnalysisPage() {
             )}
           </Card>
           <DecisionCard decision={decision} />
+          <LLMResearchMemo decision={decision} />
           <div className="agent-grid">
             <SpecialistAgentCard
               title={t("analysis.technicalAnalysis")}

@@ -246,6 +246,25 @@
     "dataQuality": "データ品質",
     "agentVotes": "エージェント投票"
   },
+  "llm": {
+    "title": "LLM リサーチメモ",
+    "status": "LLM ステータス",
+    "disabled": "LLM 無効",
+    "mockLlm": "モック LLM",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "used": "LLM 使用",
+    "yes": "はい",
+    "no": "いいえ",
+    "decisionMemo": "意思決定メモ",
+    "riskExplanation": "リスク説明",
+    "bullBearSummary": "強気/弱気サマリー",
+    "researchReport": "リサーチレポート",
+    "promptMetadata": "プロンプトメタデータ",
+    "warnings": "LLM 警告",
+    "reasoningNotes": "推論メモ",
+    "noMemo": "この意思決定で利用できる LLM メモはありません。"
+  },
   "evaluation": {
     "eyebrow": "リサーチ分析",
     "title": "意思決定評価",

@@ -246,6 +246,25 @@
     "dataQuality": "Data Quality",
     "agentVotes": "Agent Votes"
   },
+  "llm": {
+    "title": "LLM Research Memo",
+    "status": "LLM status",
+    "disabled": "LLM disabled",
+    "mockLlm": "Mock LLM",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "used": "LLM used",
+    "yes": "Yes",
+    "no": "No",
+    "decisionMemo": "Decision Memo",
+    "riskExplanation": "Risk Explanation",
+    "bullBearSummary": "Bull/Bear Summary",
+    "researchReport": "Research Report",
+    "promptMetadata": "Prompt Metadata",
+    "warnings": "LLM Warnings",
+    "reasoningNotes": "Reasoning notes",
+    "noMemo": "No LLM memo is available for this decision."
+  },
   "evaluation": {
     "eyebrow": "Research analytics",
     "title": "Decision Evaluation",

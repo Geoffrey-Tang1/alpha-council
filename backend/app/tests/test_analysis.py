@@ -35,6 +35,16 @@ def test_analysis_endpoint_returns_structured_saved_decision(client):
     assert body["data_disclaimer"] == "MVP Mode: using deterministic mock data. Not real market data."
     assert body["data_warnings"]
     assert body["data_sources"][0]["name"] == "mock"
+    assert body["llm_enabled"] is False
+    assert body["llm_provider"] == "disabled"
+    assert body["llm_used"] is False
+    assert body["llm_outputs"] == {
+        "bull_bear_summary": None,
+        "risk_explanation": None,
+        "decision_memo": None,
+        "research_report": None,
+        "prompt_versions": {},
+    }
 
 
 def test_analysis_saves_decision_for_history(client):
@@ -69,6 +79,8 @@ def test_legacy_saved_decision_without_instrument_metadata_loads_safely(client):
     assert run_response.status_code == 200
     payload = run_response.json()
     for key in ["company_name", "normalized_ticker", "display_symbol"]:
+        payload.pop(key, None)
+    for key in ["llm_enabled", "llm_provider", "llm_used", "llm_warnings", "llm_outputs"]:
         payload.pop(key, None)
     payload["decision_id"] = f"dec_legacy_{uuid4().hex}"
     payload["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -114,3 +126,6 @@ def test_legacy_saved_decision_without_instrument_metadata_loads_safely(client):
     assert body["company_name"] == "Apple Inc."
     assert body["normalized_ticker"] == "AAPL"
     assert body["display_symbol"] == "AAPL"
+    assert body["llm_enabled"] is False
+    assert body["llm_provider"] == "disabled"
+    assert body["llm_used"] is False

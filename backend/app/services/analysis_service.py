@@ -13,6 +13,7 @@ from app.data_providers.provider_registry import get_data_provider
 from app.schemas.analysis import AnalysisRequest
 from app.schemas.decisions import DecisionResponse
 from app.services.decision_service import DecisionService
+from app.services.llm_reasoning_service import LLMReasoningService
 
 
 class AnalysisService:
@@ -60,4 +61,5 @@ class AnalysisService:
             risk=risk,
             portfolio=portfolio,
         )
+        decision = LLMReasoningService().enrich_decision(decision)
         return self.decision_service.save_decision(decision)

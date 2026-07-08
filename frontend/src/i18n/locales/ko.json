@@ -246,6 +246,25 @@
     "dataQuality": "데이터 품질",
     "agentVotes": "에이전트 투표"
   },
+  "llm": {
+    "title": "LLM 리서치 메모",
+    "status": "LLM 상태",
+    "disabled": "LLM 비활성화",
+    "mockLlm": "모의 LLM",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "used": "LLM 사용",
+    "yes": "예",
+    "no": "아니요",
+    "decisionMemo": "의사결정 메모",
+    "riskExplanation": "위험 설명",
+    "bullBearSummary": "강세/약세 요약",
+    "researchReport": "리서치 보고서",
+    "promptMetadata": "프롬프트 메타데이터",
+    "warnings": "LLM 경고",
+    "reasoningNotes": "추론 메모",
+    "noMemo": "이 의사결정에 사용할 수 있는 LLM 메모가 없습니다."
+  },
   "evaluation": {
     "eyebrow": "리서치 분석",
     "title": "의사결정 평가",

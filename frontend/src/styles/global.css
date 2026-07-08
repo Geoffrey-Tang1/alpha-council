@@ -564,6 +564,37 @@ select {
   font-weight: 700;
 }
 
+.llm-memo-card {
+  display: grid;
+  gap: 16px;
+}
+
+.llm-memo-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.llm-output-section {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.llm-output-section h4 {
+  margin: 0;
+}
+
+.llm-output-section p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.llm-prompt-metadata {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
 .subtle-list {
   border-top: 1px solid var(--line);
   margin-top: 14px;

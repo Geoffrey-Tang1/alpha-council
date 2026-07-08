@@ -33,6 +33,10 @@ export function getDataSourceStatus() {
   return request("/data-sources/status");
 }
 
+export function getLLMStatus() {
+  return request("/llm/status");
+}
+
 export function getWatchlist() {
   return request("/watchlist");
 }

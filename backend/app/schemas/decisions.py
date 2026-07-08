@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 from app.core.constants import DecisionAction, MarketCode, MarketStatus
+from app.llm.schemas import LLMDecisionOutputs
 from app.schemas.agents import AgentOutputs, AgentVoteOutput, BearCaseOutput, BullCaseOutput
 from app.schemas.common import DataSource
 
@@ -33,6 +34,11 @@ class DecisionResponse(BaseModel):
     data_quality: str
     data_disclaimer: str
     data_warnings: list[str]
+    llm_enabled: bool = False
+    llm_provider: str = "disabled"
+    llm_used: bool = False
+    llm_warnings: list[str] = Field(default_factory=list)
+    llm_outputs: LLMDecisionOutputs = Field(default_factory=LLMDecisionOutputs)
     timestamp: str
     saved: bool
 
@@ -50,6 +56,9 @@ class DecisionSummary(BaseModel):
     latest_price: float | None
     market_status: MarketStatus
     final_explanation: str
+    llm_enabled: bool = False
+    llm_provider: str = "disabled"
+    llm_used: bool = False
 
 
 class DecisionListResponse(BaseModel):
