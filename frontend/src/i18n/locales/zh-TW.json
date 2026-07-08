@@ -246,6 +246,25 @@
     "dataQuality": "資料品質",
     "agentVotes": "代理投票"
   },
+  "llm": {
+    "title": "LLM 研究備忘錄",
+    "status": "LLM 狀態",
+    "disabled": "LLM 已停用",
+    "mockLlm": "模擬 LLM",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "used": "已使用 LLM",
+    "yes": "是",
+    "no": "否",
+    "decisionMemo": "決策備忘錄",
+    "riskExplanation": "風險說明",
+    "bullBearSummary": "多空摘要",
+    "researchReport": "研究報告",
+    "promptMetadata": "Prompt Metadata",
+    "warnings": "LLM 警告",
+    "reasoningNotes": "推理摘要",
+    "noMemo": "此決策沒有可用的 LLM 備忘錄。"
+  },
   "evaluation": {
     "eyebrow": "研究分析",
     "title": "決策評估",

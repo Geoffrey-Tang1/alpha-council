@@ -11,6 +11,10 @@ if TEST_DB.exists():
 os.environ["DATABASE_URL"] = "sqlite:///./test_alphacouncil.db"
 os.environ["DATA_PROVIDER"] = "mock"
 os.environ["ENABLE_LIVE_TRADING"] = "false"
+os.environ["LLM_PROVIDER"] = "disabled"
+os.environ["ENABLE_LLM_REASONING"] = "false"
+os.environ["OPENAI_API_KEY"] = ""
+os.environ["ANTHROPIC_API_KEY"] = ""
 
 from app.main import app  # noqa: E402
 

@@ -131,6 +131,12 @@ class DecisionRepository:
         if "agent_outputs" not in payload:
             payload["agent_outputs"] = self._legacy_agent_outputs(payload)
 
+        payload.setdefault("llm_enabled", False)
+        payload.setdefault("llm_provider", "disabled")
+        payload.setdefault("llm_used", False)
+        payload.setdefault("llm_warnings", [])
+        payload.setdefault("llm_outputs", {})
+
         return payload
 
     def _legacy_agent_outputs(self, payload: dict) -> dict:
