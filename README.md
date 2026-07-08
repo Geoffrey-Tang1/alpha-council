@@ -29,6 +29,7 @@ The frontend is a lightweight React/Vite app with:
 - Stock Analysis
 - Watchlist
 - Backtest runner and history
+- Decision Evaluation
 - Decision Log
 - Decision Detail payload inspection
 
@@ -122,6 +123,7 @@ kill -9 <PID>
 | GET | `/api/v1/market-status` | US, JP, TW, and KR market status. |
 | GET | `/api/v1/data-sources/status` | Active data provider and quality warning. |
 | GET | `/api/v1/watchlist` | List saved watchlist items. |
+| GET | `/api/v1/watchlist/summary` | Lightweight watchlist risk review. |
 | POST | `/api/v1/watchlist` | Add a watchlist item. |
 | GET | `/api/v1/watchlist/{id}` | Read one watchlist item. |
 | PATCH | `/api/v1/watchlist/{id}` | Update watchlist metadata. |
@@ -132,6 +134,11 @@ kill -9 <PID>
 | POST | `/api/v1/backtests/run` | Run a single-ticker long-only historical backtest. |
 | GET | `/api/v1/backtests` | List saved backtest runs from SQLite. |
 | GET | `/api/v1/backtests/{backtest_id}` | Inspect one saved backtest result. |
+| POST | `/api/v1/evaluations/decision/{decision_id}` | Evaluate one saved decision. |
+| POST | `/api/v1/evaluations/run` | Evaluate eligible saved decisions. |
+| GET | `/api/v1/evaluations` | List saved decision evaluations with filters. |
+| GET | `/api/v1/evaluations/summary` | Aggregate decision evaluation analytics. |
+| GET | `/api/v1/evaluations/{evaluation_id}` | Inspect one saved evaluation payload. |
 
 Example analysis request:
 
@@ -163,6 +170,12 @@ Backtest results always include:
 
 ```text
 Historical simulation only. Past performance does not guarantee future results.
+```
+
+Decision evaluation results always include:
+
+```text
+Decision evaluation is historical and observational only. It does not prove future profitability.
 ```
 
 ## Environment Variables

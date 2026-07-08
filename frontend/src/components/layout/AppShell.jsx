@@ -10,6 +10,7 @@ export default function AppShell({ currentPage, onNavigate, children }) {
     ["analysis", "Stock Analysis"],
     ["watchlist", "Watchlist"],
     ["backtest", "Backtest"],
+    ["evaluations", "Decision Evaluation"],
     ["decisions", "Decision Log"]
   ];
 

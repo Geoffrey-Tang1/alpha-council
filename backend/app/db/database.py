@@ -131,4 +131,73 @@ def initialize_database(database_url: str | None = None) -> None:
             ON backtest_runs (strategy_name)
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS decision_evaluations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                evaluation_id TEXT NOT NULL UNIQUE,
+                decision_id TEXT NOT NULL,
+                ticker TEXT NOT NULL,
+                market TEXT NOT NULL,
+                decision TEXT NOT NULL,
+                confidence REAL NOT NULL,
+                decision_timestamp TEXT NOT NULL,
+                decision_price REAL,
+                evaluation_status TEXT NOT NULL,
+                forward_return_1d REAL,
+                forward_return_5d REAL,
+                forward_return_20d REAL,
+                forward_return_60d REAL,
+                max_drawdown_20d REAL,
+                max_drawdown_60d REAL,
+                max_runup_20d REAL,
+                max_runup_60d REAL,
+                directional_result TEXT NOT NULL,
+                evaluation_summary TEXT NOT NULL,
+                data_provider TEXT NOT NULL,
+                data_quality TEXT NOT NULL,
+                data_disclaimer TEXT NOT NULL,
+                data_warnings_json TEXT NOT NULL,
+                full_payload_json TEXT NOT NULL,
+                evaluated_at TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_evaluations_decision_id
+            ON decision_evaluations (decision_id)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_evaluations_ticker_market
+            ON decision_evaluations (ticker, market)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_evaluations_decision
+            ON decision_evaluations (decision)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_evaluations_directional_result
+            ON decision_evaluations (directional_result)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_evaluations_confidence
+            ON decision_evaluations (confidence)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_evaluations_evaluated_at
+            ON decision_evaluations (evaluated_at)
+            """
+        )
         connection.commit()

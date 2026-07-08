@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import BacktestPage from "./pages/BacktestPage.jsx";
 import DecisionDetailPage from "./pages/DecisionDetailPage.jsx";
 import DecisionLogPage from "./pages/DecisionLogPage.jsx";
+import EvaluationPage from "./pages/EvaluationPage.jsx";
 import StockAnalysisPage from "./pages/StockAnalysisPage.jsx";
 import WatchlistPage from "./pages/WatchlistPage.jsx";
 
@@ -30,6 +31,7 @@ export default function App() {
       {page === "analysis" && <StockAnalysisPage />}
       {page === "watchlist" && <WatchlistPage onNavigate={navigate} />}
       {page === "backtest" && <BacktestPage />}
+      {page === "evaluations" && <EvaluationPage />}
       {page === "decisions" && <DecisionLogPage onSelectDecision={openDecision} />}
       {page === "decisionDetail" && (
         <DecisionDetailPage decisionId={selectedDecisionId} onBack={() => navigate("decisions")} />

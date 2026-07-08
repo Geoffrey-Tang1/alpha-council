@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getDecisions, getMarketStatus } from "../api/client.js";
+import { getDecisions, getMarketStatus, getWatchlistSummary } from "../api/client.js";
 import MarketStatusGrid from "../components/market/MarketStatusGrid.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
@@ -9,13 +9,15 @@ import { formatConfidence, formatDateTime } from "../utils/formatting.js";
 export default function DashboardPage({ onNavigate, onSelectDecision }) {
   const [markets, setMarkets] = useState([]);
   const [decisions, setDecisions] = useState([]);
+  const [watchlistSummary, setWatchlistSummary] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getMarketStatus(), getDecisions()])
-      .then(([marketData, decisionData]) => {
+    Promise.all([getMarketStatus(), getDecisions(), getWatchlistSummary()])
+      .then(([marketData, decisionData, watchlistData]) => {
         setMarkets(marketData.markets);
         setDecisions(decisionData.items.slice(0, 5));
+        setWatchlistSummary(watchlistData);
       })
       .catch((err) => setError(err.message));
   }, []);
@@ -64,10 +66,68 @@ export default function DashboardPage({ onNavigate, onSelectDecision }) {
           <div className="quick-links">
             <Button onClick={() => onNavigate("analysis")}>New analysis</Button>
             <Button onClick={() => onNavigate("watchlist")}>Manage watchlist</Button>
+            <Button onClick={() => onNavigate("evaluations")}>Evaluate decisions</Button>
             <Button onClick={() => onNavigate("decisions")}>Review decisions</Button>
           </div>
         </Card>
       </div>
+
+      <Card>
+        <div className="card-row">
+          <div>
+            <h3>Watchlist Risk Review</h3>
+            <p className="muted">Lightweight research summary only. No portfolio accounting or live exposure tracking.</p>
+          </div>
+          <Button onClick={() => onNavigate("watchlist")}>Manage</Button>
+        </div>
+        <div className="metric-grid">
+          <div>
+            <span>Total watchlist items</span>
+            <strong>{watchlistSummary?.total_items ?? 0}</strong>
+          </div>
+          <div>
+            <span>High risk items</span>
+            <strong>{watchlistSummary?.high_risk_count ?? 0}</strong>
+          </div>
+          <div>
+            <span>Non-real data count</span>
+            <strong>{watchlistSummary?.non_real_data_count ?? 0}</strong>
+          </div>
+        </div>
+        <div className="summary-grid">
+          <div>
+            <h4>Markets</h4>
+            <ul className="stack-list">
+              {Object.entries(watchlistSummary?.count_by_market || {}).map(([key, value]) => (
+                <li key={key}>{key}: {value}</li>
+              ))}
+              {Object.keys(watchlistSummary?.count_by_market || {}).length === 0 && <li>No watchlist items yet.</li>}
+            </ul>
+          </div>
+          <div>
+            <h4>Signals</h4>
+            <ul className="stack-list">
+              {Object.entries(watchlistSummary?.count_by_latest_signal || {}).map(([key, value]) => (
+                <li key={key}>{key}: {value}</li>
+              ))}
+              {Object.keys(watchlistSummary?.count_by_latest_signal || {}).length === 0 && <li>No saved signals yet.</li>}
+            </ul>
+          </div>
+          <div>
+            <h4>Risk Levels</h4>
+            <ul className="stack-list">
+              {Object.entries(watchlistSummary?.count_by_latest_risk_level || {}).map(([key, value]) => (
+                <li key={key}>{key}: {value}</li>
+              ))}
+              {Object.keys(watchlistSummary?.count_by_latest_risk_level || {}).length === 0 && <li>No risk levels yet.</li>}
+            </ul>
+          </div>
+        </div>
+        {watchlistSummary?.concentration_warning && (
+          <p className="data-disclaimer">{watchlistSummary.concentration_warning}</p>
+        )}
+        {watchlistSummary?.data_quality_note && <p className="muted">{watchlistSummary.data_quality_note}</p>}
+      </Card>
 
       <Card>
         <div className="card-row">

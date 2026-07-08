@@ -37,3 +37,14 @@ class WatchlistItem(BaseModel):
 class WatchlistResponse(BaseModel):
     items: list[WatchlistItem]
     total: int
+
+
+class WatchlistSummaryResponse(BaseModel):
+    total_items: int
+    count_by_market: dict[str, int]
+    count_by_latest_signal: dict[str, int]
+    count_by_latest_risk_level: dict[str, int]
+    high_risk_count: int
+    non_real_data_count: int
+    concentration_warning: str | None
+    data_quality_note: str
