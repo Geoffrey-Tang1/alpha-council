@@ -1,6 +1,6 @@
 # AlphaCouncil
 
-AlphaCouncil is a multi-agent global equity trading decision platform for research, signal review, risk control, backtesting preparation, and decision logging.
+AlphaCouncil is a multi-agent global equity trading decision platform for research, signal review, risk control, historical backtesting, and decision logging.
 
 This MVP includes a FastAPI backend, React + Vite frontend, SQLite-backed decision history, deterministic mock data, market status logic, and an optional yfinance market-data provider.
 
@@ -28,7 +28,7 @@ The frontend is a lightweight React/Vite app with:
 - Dashboard
 - Stock Analysis
 - Watchlist
-- Backtest form shell
+- Backtest runner and history
 - Decision Log
 - Decision Detail payload inspection
 
@@ -126,9 +126,12 @@ kill -9 <PID>
 | GET | `/api/v1/watchlist/{id}` | Read one watchlist item. |
 | PATCH | `/api/v1/watchlist/{id}` | Update watchlist metadata. |
 | DELETE | `/api/v1/watchlist/{id}` | Remove a watchlist item. |
-| POST | `/api/v1/analysis/run` | Run deterministic mock multi-agent analysis and save the decision. |
+| POST | `/api/v1/analysis/run` | Run multi-agent analysis with the selected data provider and save the decision. |
 | GET | `/api/v1/decisions` | List saved decisions from SQLite. |
 | GET | `/api/v1/decisions/{decision_id}` | Inspect one saved decision payload. |
+| POST | `/api/v1/backtests/run` | Run a single-ticker long-only historical backtest. |
+| GET | `/api/v1/backtests` | List saved backtest runs from SQLite. |
+| GET | `/api/v1/backtests/{backtest_id}` | Inspect one saved backtest result. |
 
 Example analysis request:
 
@@ -139,6 +142,27 @@ Example analysis request:
   "time_horizon": "swing",
   "strategy_preference": "moving_average_crossover"
 }
+```
+
+Example backtest request:
+
+```json
+{
+  "ticker": "NVDA",
+  "market": "US",
+  "start_date": "2023-01-01",
+  "end_date": "2024-12-31",
+  "strategy_name": "moving_average_crossover",
+  "initial_capital": 100000,
+  "transaction_cost_bps": 5,
+  "slippage_bps": 10
+}
+```
+
+Backtest results always include:
+
+```text
+Historical simulation only. Past performance does not guarantee future results.
 ```
 
 ## Environment Variables
