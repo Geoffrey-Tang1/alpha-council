@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import sqlite3
 
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.db.database import get_connection, initialize_database
 from app.schemas.watchlist import WatchlistItem, WatchlistItemCreate, WatchlistItemUpdate
 
@@ -9,8 +10,9 @@ class WatchlistRepository:
     def __init__(self) -> None:
         initialize_database()
 
-    def create(self, payload: WatchlistItemCreate) -> WatchlistItem:
+    def create(self, payload: WatchlistItemCreate, metadata: dict[str, str] | None = None) -> WatchlistItem:
         now = datetime.now(timezone.utc).isoformat()
+        metadata = metadata or build_instrument_metadata(ticker=payload.ticker, market=payload.market)
         try:
             with get_connection() as connection:
                 cursor = connection.execute(
@@ -18,6 +20,9 @@ class WatchlistRepository:
                     INSERT INTO watchlist_items (
                         ticker,
                         market,
+                        company_name,
+                        normalized_ticker,
+                        display_symbol,
                         notes,
                         latest_signal,
                         latest_risk_level,
@@ -25,11 +30,14 @@ class WatchlistRepository:
                         created_at,
                         updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         payload.ticker,
                         payload.market.value,
+                        metadata["company_name"],
+                        metadata["normalized_ticker"],
+                        metadata["display_symbol"],
                         payload.notes,
                         "WATCH",
                         "UNKNOWN",
@@ -114,11 +122,20 @@ class WatchlistRepository:
             return cursor.rowcount > 0
 
     def _row_to_item(self, row) -> WatchlistItem:
+        metadata = build_instrument_metadata(
+            ticker=row["ticker"],
+            market=row["market"],
+            company_name=row["company_name"],
+        )
         return WatchlistItem(
             id=row["id"],
             ticker=row["ticker"],
             market=row["market"],
-            company_name=row["company_name"],
+            company_name=metadata["company_name"]
+            if row["company_name"] in {None, "", "Unknown Company"}
+            else row["company_name"],
+            normalized_ticker=row["normalized_ticker"] or metadata["normalized_ticker"],
+            display_symbol=row["display_symbol"] or metadata["display_symbol"],
             notes=row["notes"],
             latest_signal=row["latest_signal"],
             latest_risk_level=row["latest_risk_level"],

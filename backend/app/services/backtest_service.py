@@ -4,6 +4,7 @@ from uuid import uuid4
 from app.backtesting.engine import BacktestDataError, BacktestEngine, HISTORICAL_SIMULATION_WARNING
 from app.core.constants import MarketCode
 from app.data_providers.base import MarketDataProvider
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.data_providers.provider_registry import get_data_provider
 from app.db.repositories.backtest_repository import BacktestRepository
 from app.schemas.backtests import (
@@ -76,9 +77,13 @@ class BacktestService:
                 extra_warning="Backtest could not run because the data provider failed.",
             )
 
+        metadata = self._instrument_metadata(ticker=payload.ticker, market=payload.market)
         response = BacktestResponse(
             backtest_id=f"bt_{uuid4().hex}",
-            ticker=payload.ticker,
+            ticker=metadata["ticker"],
+            company_name=metadata["company_name"],
+            normalized_ticker=metadata["normalized_ticker"],
+            display_symbol=metadata["display_symbol"],
             market=payload.market,
             strategy_name=payload.strategy_name,
             start_date=payload.start_date,
@@ -124,3 +129,14 @@ class BacktestService:
 
     def _data_warnings(self, source_status: dict, extra_warnings: list[str]) -> list[str]:
         return list(dict.fromkeys([*source_status.get("warnings", []), *extra_warnings]))
+
+    def _instrument_metadata(self, ticker: str, market: MarketCode) -> dict[str, str]:
+        try:
+            profile = self.provider.get_company_profile(ticker=ticker, market=market)
+            return build_instrument_metadata(
+                ticker=ticker,
+                market=market,
+                company_name=profile.get("company_name"),
+            )
+        except Exception:  # pragma: no cover - provider profile failures vary.
+            return build_instrument_metadata(ticker=ticker, market=market)

@@ -28,6 +28,16 @@ def get_connection(database_url: str | None = None) -> sqlite3.Connection:
     return connection
 
 
+def _ensure_columns(connection: sqlite3.Connection, table_name: str, columns: dict[str, str]) -> None:
+    existing_columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    }
+    for column_name, column_type in columns.items():
+        if column_name not in existing_columns:
+            connection.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+
+
 def initialize_database(database_url: str | None = None) -> None:
     with get_connection(database_url) as connection:
         connection.execute(
@@ -37,6 +47,9 @@ def initialize_database(database_url: str | None = None) -> None:
                 decision_id TEXT NOT NULL UNIQUE,
                 timestamp TEXT NOT NULL,
                 ticker TEXT NOT NULL,
+                company_name TEXT,
+                normalized_ticker TEXT,
+                display_symbol TEXT,
                 market TEXT NOT NULL,
                 latest_price REAL,
                 market_status TEXT NOT NULL,
@@ -67,6 +80,8 @@ def initialize_database(database_url: str | None = None) -> None:
                 ticker TEXT NOT NULL,
                 market TEXT NOT NULL,
                 company_name TEXT,
+                normalized_ticker TEXT,
+                display_symbol TEXT,
                 notes TEXT,
                 latest_signal TEXT,
                 latest_risk_level TEXT,
@@ -95,6 +110,9 @@ def initialize_database(database_url: str | None = None) -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 backtest_id TEXT NOT NULL UNIQUE,
                 ticker TEXT NOT NULL,
+                company_name TEXT,
+                normalized_ticker TEXT,
+                display_symbol TEXT,
                 market TEXT NOT NULL,
                 strategy_name TEXT NOT NULL,
                 start_date TEXT NOT NULL,
@@ -138,6 +156,9 @@ def initialize_database(database_url: str | None = None) -> None:
                 evaluation_id TEXT NOT NULL UNIQUE,
                 decision_id TEXT NOT NULL,
                 ticker TEXT NOT NULL,
+                company_name TEXT,
+                normalized_ticker TEXT,
+                display_symbol TEXT,
                 market TEXT NOT NULL,
                 decision TEXT NOT NULL,
                 confidence REAL NOT NULL,
@@ -199,5 +220,40 @@ def initialize_database(database_url: str | None = None) -> None:
             CREATE INDEX IF NOT EXISTS idx_decision_evaluations_evaluated_at
             ON decision_evaluations (evaluated_at)
             """
+        )
+        _ensure_columns(
+            connection,
+            "decisions",
+            {
+                "company_name": "TEXT",
+                "normalized_ticker": "TEXT",
+                "display_symbol": "TEXT",
+            },
+        )
+        _ensure_columns(
+            connection,
+            "watchlist_items",
+            {
+                "normalized_ticker": "TEXT",
+                "display_symbol": "TEXT",
+            },
+        )
+        _ensure_columns(
+            connection,
+            "backtest_runs",
+            {
+                "company_name": "TEXT",
+                "normalized_ticker": "TEXT",
+                "display_symbol": "TEXT",
+            },
+        )
+        _ensure_columns(
+            connection,
+            "decision_evaluations",
+            {
+                "company_name": "TEXT",
+                "normalized_ticker": "TEXT",
+                "display_symbol": "TEXT",
+            },
         )
         connection.commit()

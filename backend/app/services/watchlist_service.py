@@ -1,3 +1,6 @@
+from app.data_providers.base import MarketDataProvider
+from app.data_providers.instrument_metadata import build_instrument_metadata
+from app.data_providers.provider_registry import get_data_provider
 from app.db.repositories.watchlist_repository import WatchlistRepository
 from app.schemas.watchlist import (
     WatchlistItem,
@@ -9,11 +12,16 @@ from app.schemas.watchlist import (
 
 
 class WatchlistService:
-    def __init__(self, repository: WatchlistRepository | None = None) -> None:
+    def __init__(
+        self,
+        repository: WatchlistRepository | None = None,
+        provider: MarketDataProvider | None = None,
+    ) -> None:
         self.repository = repository or WatchlistRepository()
+        self.provider = provider or get_data_provider()
 
     def create_item(self, payload: WatchlistItemCreate) -> WatchlistItem:
-        return self.repository.create(payload)
+        return self.repository.create(payload, metadata=self._instrument_metadata(payload))
 
     def list_items(self) -> WatchlistResponse:
         items = self.repository.list()
@@ -63,3 +71,14 @@ class WatchlistService:
         if dominant_count / total > 0.6:
             return f"{dominant_market} represents more than 60% of the watchlist."
         return None
+
+    def _instrument_metadata(self, payload: WatchlistItemCreate) -> dict[str, str]:
+        try:
+            profile = self.provider.get_company_profile(ticker=payload.ticker, market=payload.market)
+            return build_instrument_metadata(
+                ticker=payload.ticker,
+                market=payload.market,
+                company_name=profile.get("company_name"),
+            )
+        except Exception:  # pragma: no cover - provider profile failures vary.
+            return build_instrument_metadata(ticker=payload.ticker, market=payload.market)

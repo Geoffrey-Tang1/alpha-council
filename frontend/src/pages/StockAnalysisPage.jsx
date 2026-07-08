@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { runAnalysis } from "../api/client.js";
 import AgentOpinionCard from "../components/analysis/AgentOpinionCard.jsx";
@@ -7,6 +8,7 @@ import RiskPanel from "../components/analysis/RiskPanel.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
 import { formatConfidence } from "../utils/formatting.js";
+import { enumLabel, strategyLabel } from "../utils/labels.js";
 
 const initialForm = {
   ticker: "NVDA",
@@ -16,6 +18,7 @@ const initialForm = {
 };
 
 export default function StockAnalysisPage() {
+  const { t } = useTranslation();
   const [form, setForm] = useState(initialForm);
   const [decision, setDecision] = useState(null);
   const [error, setError] = useState("");
@@ -44,20 +47,20 @@ export default function StockAnalysisPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Committee workflow</p>
-          <h2>Stock Analysis</h2>
-          <p>Run deterministic Phase 1 agents against mock data and save the decision.</p>
+          <p className="eyebrow">{t("analysis.eyebrow")}</p>
+          <h2>{t("analysis.title")}</h2>
+          <p>{t("analysis.subtitle")}</p>
         </div>
       </div>
 
       <Card>
         <form className="analysis-form" onSubmit={submitAnalysis}>
           <label>
-            Ticker
+            {t("common.ticker")}
             <input name="ticker" value={form.ticker} onChange={updateField} required />
           </label>
           <label>
-            Market
+            {t("common.market")}
             <select name="market" value={form.market} onChange={updateField}>
               <option value="US">US</option>
               <option value="JP">JP</option>
@@ -66,23 +69,23 @@ export default function StockAnalysisPage() {
             </select>
           </label>
           <label>
-            Time horizon
+            {t("analysis.timeHorizon")}
             <select name="time_horizon" value={form.time_horizon} onChange={updateField}>
-              <option value="intraday">Intraday</option>
-              <option value="swing">Swing</option>
-              <option value="medium_term">Medium term</option>
-              <option value="long_term">Long term</option>
+              <option value="intraday">{t("analysis.horizons.intraday")}</option>
+              <option value="swing">{t("analysis.horizons.swing")}</option>
+              <option value="medium_term">{t("analysis.horizons.medium_term")}</option>
+              <option value="long_term">{t("analysis.horizons.long_term")}</option>
             </select>
           </label>
           <label>
-            Strategy preference
+            {t("analysis.strategyPreference")}
             <select name="strategy_preference" value={form.strategy_preference} onChange={updateField}>
-              <option value="moving_average_crossover">Moving average crossover</option>
-              <option value="rsi_oversold_rebound">RSI oversold rebound</option>
-              <option value="breakout_n_day_high">Breakout N-day high</option>
+              <option value="moving_average_crossover">{strategyLabel(t, "moving_average_crossover")}</option>
+              <option value="rsi_oversold_rebound">{strategyLabel(t, "rsi_oversold_rebound")}</option>
+              <option value="breakout_n_day_high">{strategyLabel(t, "breakout_n_day_high")}</option>
             </select>
           </label>
-          <Button type="submit" disabled={loading}>{loading ? "Running..." : "Run Analysis"}</Button>
+          <Button type="submit" disabled={loading}>{loading ? t("analysis.running") : t("analysis.run")}</Button>
         </form>
       </Card>
 
@@ -91,10 +94,15 @@ export default function StockAnalysisPage() {
       {decision && (
         <div className="analysis-results">
           <Card>
-            <h3>Data Quality</h3>
+            <h3>{t("analysis.dataQuality")}</h3>
             <p>{decision.data_disclaimer}</p>
             <p className="muted">
-              Provider: {decision.data_provider} · Quality: {decision.data_quality}
+              {t("analysis.inputTicker")}: {decision.ticker} · {t("analysis.normalizedTicker")}:{" "}
+              {decision.normalized_ticker || decision.ticker} · {t("common.market")}: {decision.market}
+            </p>
+            <p className="muted">
+              {t("common.dataProvider")}: {decision.data_provider} · {t("common.dataQuality")}:{" "}
+              {enumLabel(t, decision.data_quality)}
             </p>
             {decision.data_warnings?.length > 0 && (
               <ul className="stack-list warning-list">
@@ -107,7 +115,7 @@ export default function StockAnalysisPage() {
           <DecisionCard decision={decision} />
           <div className="agent-grid">
             <SpecialistAgentCard
-              title="Technical Analysis"
+              title={t("analysis.technicalAnalysis")}
               signal={decision.agent_outputs.technical_analysis.technical_signal}
               confidence={decision.agent_outputs.technical_analysis.confidence}
               explanation={decision.agent_outputs.technical_analysis.explanation}
@@ -115,7 +123,7 @@ export default function StockAnalysisPage() {
               risks={decision.agent_outputs.technical_analysis.risks}
             />
             <SpecialistAgentCard
-              title="Fundamental Analysis"
+              title={t("analysis.fundamentalAnalysis")}
               signal={decision.agent_outputs.fundamental_analysis.fundamental_signal}
               confidence={decision.agent_outputs.fundamental_analysis.confidence}
               explanation={decision.agent_outputs.fundamental_analysis.explanation}
@@ -123,7 +131,7 @@ export default function StockAnalysisPage() {
               risks={decision.agent_outputs.fundamental_analysis.risks}
             />
             <SpecialistAgentCard
-              title="News and Sentiment"
+              title={t("analysis.newsSentiment")}
               signal={decision.agent_outputs.news_sentiment.sentiment_signal}
               confidence={decision.agent_outputs.news_sentiment.confidence}
               explanation={decision.agent_outputs.news_sentiment.explanation}
@@ -131,7 +139,7 @@ export default function StockAnalysisPage() {
               risks={decision.agent_outputs.news_sentiment.risks}
             />
             <SpecialistAgentCard
-              title="Macro and Cross-Market"
+              title={t("analysis.macroCrossMarket")}
               signal={decision.agent_outputs.macro_cross_market.macro_signal}
               confidence={decision.agent_outputs.macro_cross_market.confidence}
               explanation={decision.agent_outputs.macro_cross_market.explanation}
@@ -139,10 +147,10 @@ export default function StockAnalysisPage() {
               risks={decision.agent_outputs.macro_cross_market.risks}
             />
             <SpecialistAgentCard
-              title="Risk Manager"
+              title={t("analysis.riskManager")}
               signal={decision.agent_outputs.risk_manager.risk_level}
               confidence={Math.max(0, Math.min(1, 0.7 + decision.agent_outputs.risk_manager.confidence_adjustment))}
-              explanation={decision.agent_outputs.risk_manager.veto ? decision.agent_outputs.risk_manager.veto_reason : "Risk controls passed without a BUY veto."}
+              explanation={decision.agent_outputs.risk_manager.veto ? decision.agent_outputs.risk_manager.veto_reason : t("analysis.riskControlsPassed")}
               details={{
                 max_position_size_pct: decision.agent_outputs.risk_manager.max_position_size_pct,
                 stop_loss_required: decision.agent_outputs.risk_manager.stop_loss_required ? "yes" : "no",
@@ -151,7 +159,7 @@ export default function StockAnalysisPage() {
               risks={decision.agent_outputs.risk_manager.risk_warnings}
             />
             <SpecialistAgentCard
-              title="Portfolio Manager"
+              title={t("analysis.portfolioManager")}
               signal={decision.agent_outputs.portfolio_manager.portfolio_fit}
               confidence={0.6}
               explanation={decision.agent_outputs.portfolio_manager.explanation}
@@ -168,31 +176,31 @@ export default function StockAnalysisPage() {
           />
           <div className="two-column">
             <AgentOpinionCard
-              title="Bull Case"
+              title={t("analysis.bullCase")}
               items={decision.bull_case.bull_points}
               secondary={decision.bull_case.supporting_evidence}
             />
             <AgentOpinionCard
-              title="Bear Case"
+              title={t("analysis.bearCase")}
               items={decision.bear_case.bear_points}
               secondary={decision.bear_case.risk_factors}
             />
           </div>
           <Card>
-            <h3>Agent Votes</h3>
+            <h3>{t("analysis.agentVotes")}</h3>
             <table>
               <thead>
                 <tr>
-                  <th>Agent</th>
-                  <th>Vote</th>
-                  <th>Confidence</th>
+                  <th>{t("analysis.agent")}</th>
+                  <th>{t("analysis.vote")}</th>
+                  <th>{t("common.confidence")}</th>
                 </tr>
               </thead>
               <tbody>
                 {decision.agent_votes.map((vote) => (
                   <tr key={vote.agent}>
                     <td>{vote.agent}</td>
-                    <td>{vote.vote}</td>
+                    <td>{enumLabel(t, vote.vote)}</td>
                     <td>{formatConfidence(vote.confidence)}</td>
                   </tr>
                 ))}
@@ -206,20 +214,22 @@ export default function StockAnalysisPage() {
 }
 
 function SpecialistAgentCard({ title, signal, confidence, explanation, details = {}, risks = [] }) {
+  const { t } = useTranslation();
+
   return (
-    <Card>
-      <div className="card-row">
-        <h3>{title}</h3>
-        <strong>{signal}</strong>
+    <Card className="agent-card">
+      <div className="agent-card-header">
+        <h3 className="agent-card-title">{title}</h3>
+        <strong className="agent-card-badge">{enumLabel(t, signal)}</strong>
       </div>
       <p>{explanation}</p>
-      <p className="muted">Confidence: {formatConfidence(confidence)}</p>
+      <p className="muted">{t("common.confidence")}: {formatConfidence(confidence)}</p>
       {Object.keys(details).length > 0 && (
-        <dl className="detail-list">
+        <dl className="metric-list">
           {Object.entries(details).map(([key, value]) => (
-            <div key={key}>
-              <dt>{key}</dt>
-              <dd>{String(value ?? "N/A")}</dd>
+            <div key={key} className={`metric-row ${isLongMetricValue(value) ? "metric-row-long" : ""}`}>
+              <dt className="metric-key">{formatMetricLabel(t, key)}</dt>
+              <dd className="metric-value">{formatMetricValue(value)}</dd>
             </div>
           ))}
         </dl>
@@ -233,4 +243,40 @@ function SpecialistAgentCard({ title, signal, confidence, explanation, details =
       )}
     </Card>
   );
+}
+
+function formatMetricLabel(t, key) {
+  const translated = t(`metrics.${key}`, { defaultValue: "" });
+  if (translated) {
+    return translated;
+  }
+
+  const acronyms = {
+    cagr: "CAGR",
+    macd: "MACD",
+    pe: "P/E",
+    pct: "Pct",
+    rsi: "RSI",
+    yoy: "YoY"
+  };
+
+  return key
+    .split("_")
+    .map((part) => acronyms[part.toLowerCase()] || `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function formatMetricValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "N/A";
+  }
+  if (typeof value === "number") {
+    return Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  }
+  return String(value);
+}
+
+function isLongMetricValue(value) {
+  const text = formatMetricValue(value);
+  return text.length > 30 || text.includes(",");
 }

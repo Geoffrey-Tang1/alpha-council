@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 
 from app.core.constants import DecisionAction, MarketCode
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.db.database import get_connection, initialize_database
 from app.schemas.evaluations import DecisionEvaluationResponse, DirectionalResult
 
@@ -21,6 +22,9 @@ class EvaluationRepository:
                     evaluation_id,
                     decision_id,
                     ticker,
+                    company_name,
+                    normalized_ticker,
+                    display_symbol,
                     market,
                     decision,
                     confidence,
@@ -45,12 +49,15 @@ class EvaluationRepository:
                     evaluated_at,
                     created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     evaluation.evaluation_id,
                     evaluation.decision_id,
                     evaluation.ticker,
+                    evaluation.company_name,
+                    evaluation.normalized_ticker,
+                    evaluation.display_symbol,
                     evaluation.market.value,
                     evaluation.decision.value,
                     evaluation.confidence,
@@ -181,4 +188,17 @@ class EvaluationRepository:
         return self._payload_to_evaluation(row["full_payload_json"])
 
     def _payload_to_evaluation(self, raw_payload: str) -> DecisionEvaluationResponse:
-        return DecisionEvaluationResponse.model_validate(json.loads(raw_payload))
+        payload = json.loads(raw_payload)
+        metadata = build_instrument_metadata(
+            ticker=payload.get("ticker", ""),
+            market=payload.get("market", "US"),
+            company_name=payload.get("company_name"),
+        )
+        payload["company_name"] = (
+            metadata["company_name"]
+            if payload.get("company_name") in {None, "", "Unknown Company"}
+            else payload["company_name"]
+        )
+        payload["normalized_ticker"] = payload.get("normalized_ticker") or metadata["normalized_ticker"]
+        payload["display_symbol"] = payload.get("display_symbol") or metadata["display_symbol"]
+        return DecisionEvaluationResponse.model_validate(payload)

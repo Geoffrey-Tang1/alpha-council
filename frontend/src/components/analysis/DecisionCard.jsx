@@ -1,8 +1,13 @@
-import { formatConfidence, formatPrice } from "../../utils/formatting.js";
+import { useTranslation } from "react-i18next";
+
+import { formatConfidence, formatInstrument, formatPrice } from "../../utils/formatting.js";
+import { enumLabel } from "../../utils/labels.js";
 import Badge from "../ui/Badge.jsx";
 import Card from "../ui/Card.jsx";
 
 export default function DecisionCard({ decision }) {
+  const { t } = useTranslation();
+
   if (!decision) {
     return null;
   }
@@ -19,29 +24,36 @@ export default function DecisionCard({ decision }) {
     <Card className="decision-card">
       <div className="card-row">
         <div>
-          <p className="eyebrow">{decision.ticker} · {decision.market}</p>
-          <h2>{decision.decision}</h2>
+          <p className="eyebrow">{decision.market} · {decision.data_provider || "mock"}</p>
+          <h3 className="instrument-title">
+            {formatInstrument(decision.company_name, decision.display_symbol, decision.ticker)}
+          </h3>
+          <h2>{enumLabel(t, decision.decision)}</h2>
+          <p className="muted">
+            {t("analysis.inputTicker")}: {decision.ticker} · {t("analysis.normalizedTicker")}:{" "}
+            {decision.normalized_ticker || decision.ticker}
+          </p>
         </div>
         <div className="decision-badges">
-          <Badge tone={dataTone}>{decision.data_quality}</Badge>
+          <Badge tone={dataTone}>{enumLabel(t, decision.data_quality)}</Badge>
           <Badge tone={tone}>{formatConfidence(decision.confidence)}</Badge>
         </div>
       </div>
       <div className="metric-grid">
         <div>
-          <span>Latest price</span>
+          <span>{t("decisionCard.latestPrice")}</span>
           <strong>{formatPrice(decision.latest_price)}</strong>
         </div>
         <div>
-          <span>Stop loss</span>
+          <span>{t("decisionCard.stopLoss")}</span>
           <strong>{formatPrice(decision.stop_loss)}</strong>
         </div>
         <div>
-          <span>Take profit</span>
+          <span>{t("decisionCard.takeProfit")}</span>
           <strong>{formatPrice(decision.take_profit)}</strong>
         </div>
         <div>
-          <span>Max size</span>
+          <span>{t("decisionCard.maxSize")}</span>
           <strong>{decision.max_position_size_pct}%</strong>
         </div>
       </div>

@@ -59,6 +59,9 @@ class TradeLogEntry(BaseModel):
 class BacktestResponse(BaseModel):
     backtest_id: str
     ticker: str
+    company_name: str = "Unknown Company"
+    normalized_ticker: str = ""
+    display_symbol: str = ""
     market: MarketCode
     strategy_name: str
     start_date: date

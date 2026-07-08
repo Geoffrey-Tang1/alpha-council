@@ -6,6 +6,7 @@ import pandas as pd
 
 from app.core.constants import MarketCode
 from app.data_providers.base import MarketDataProvider
+from app.data_providers.instrument_metadata import build_instrument_metadata
 
 
 class MockDataProvider(MarketDataProvider):
@@ -63,10 +64,13 @@ class MockDataProvider(MarketDataProvider):
         return float(history.iloc[-1]["close"])
 
     def get_company_profile(self, ticker: str, market: MarketCode) -> dict:
+        metadata = build_instrument_metadata(ticker=ticker, market=market)
         return {
-            "ticker": ticker.upper(),
+            "ticker": metadata["ticker"],
             "market": market.value,
-            "company_name": f"{ticker.upper()} Holdings",
+            "normalized_ticker": metadata["normalized_ticker"],
+            "display_symbol": metadata["display_symbol"],
+            "company_name": metadata["company_name"],
             "sector": "Technology",
             "industry": "Semiconductors and Software",
             "is_mock": True,

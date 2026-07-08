@@ -19,6 +19,9 @@ def test_backtest_api_response_shape_and_persistence(client):
     body = run_response.json()
     assert body["backtest_id"].startswith("bt_")
     assert body["ticker"] == "NVDA"
+    assert body["company_name"] == "NVIDIA Corporation"
+    assert body["normalized_ticker"] == "NVDA"
+    assert body["display_symbol"] == "NVDA"
     assert body["market"] == "US"
     assert body["strategy_name"] == "moving_average_crossover"
     assert body["initial_capital"] == 100000
@@ -43,4 +46,6 @@ def test_backtest_api_response_shape_and_persistence(client):
 
     detail_response = client.get(f"/api/v1/backtests/{body['backtest_id']}")
     assert detail_response.status_code == 200
-    assert detail_response.json()["backtest_id"] == body["backtest_id"]
+    detail = detail_response.json()
+    assert detail["backtest_id"] == body["backtest_id"]
+    assert detail["company_name"] == "NVIDIA Corporation"

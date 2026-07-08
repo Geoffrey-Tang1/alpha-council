@@ -6,6 +6,7 @@ import yfinance as yf
 
 from app.core.constants import MarketCode
 from app.data_providers.base import MarketDataProvider
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.data_providers.mock_provider import MockDataProvider
 from app.data_providers.ticker_normalization import normalize_yfinance_ticker
 
@@ -133,10 +134,17 @@ class YFinanceDataProvider(MarketDataProvider):
         normalized_ticker = normalize_yfinance_ticker(ticker=ticker, market=market)
         try:
             info = self.yf.Ticker(normalized_ticker).info or {}
+            metadata = build_instrument_metadata(
+                ticker=ticker,
+                market=market,
+                company_name=info.get("longName") or info.get("shortName"),
+            )
             return {
-                "ticker": normalized_ticker,
+                "ticker": metadata["ticker"],
                 "market": market.value,
-                "company_name": info.get("longName") or info.get("shortName") or normalized_ticker,
+                "normalized_ticker": metadata["normalized_ticker"],
+                "display_symbol": metadata["display_symbol"],
+                "company_name": metadata["company_name"],
                 "sector": info.get("sector"),
                 "industry": info.get("industry"),
                 "exchange": info.get("exchange"),
@@ -144,10 +152,13 @@ class YFinanceDataProvider(MarketDataProvider):
             }
         except Exception as exc:  # pragma: no cover - exact yfinance errors vary
             self._append_warning(f"yfinance company profile unavailable for {normalized_ticker}: {exc}.")
+            metadata = build_instrument_metadata(ticker=ticker, market=market, company_name="Unknown Company")
             return {
-                "ticker": normalized_ticker,
+                "ticker": metadata["ticker"],
                 "market": market.value,
-                "company_name": normalized_ticker,
+                "normalized_ticker": metadata["normalized_ticker"],
+                "display_symbol": metadata["display_symbol"],
+                "company_name": metadata["company_name"],
                 "sector": None,
                 "industry": None,
                 "exchange": None,

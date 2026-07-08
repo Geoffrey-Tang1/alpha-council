@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from app.agents.base import BaseAgent
 from app.core.constants import AgentSignal, DecisionAction
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.schemas.agents import (
     AgentOutputs,
     AgentVoteOutput,
@@ -82,10 +83,19 @@ class DecisionCommitteeAgent(BaseAgent):
             data_disclaimer,
             *data_source_status.get("warnings", []),
         ]
+        company_profile = collected_data.get("company_profile", {})
+        metadata = build_instrument_metadata(
+            ticker=collected_data["ticker"],
+            market=collected_data["market"],
+            company_name=company_profile.get("company_name"),
+        )
 
         return DecisionResponse(
             decision_id=f"dec_{uuid4().hex}",
             ticker=collected_data["ticker"],
+            company_name=metadata["company_name"],
+            normalized_ticker=metadata["normalized_ticker"],
+            display_symbol=metadata["display_symbol"],
             market=collected_data["market"],
             latest_price=latest_price,
             market_status=market_status,

@@ -1,5 +1,6 @@
 import json
 
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.db.database import get_connection, initialize_database
 from app.schemas.backtests import BacktestResponse
 
@@ -15,6 +16,9 @@ class BacktestRepository:
                 INSERT OR REPLACE INTO backtest_runs (
                     backtest_id,
                     ticker,
+                    company_name,
+                    normalized_ticker,
+                    display_symbol,
                     market,
                     strategy_name,
                     start_date,
@@ -37,11 +41,14 @@ class BacktestRepository:
                     data_warnings_json,
                     created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     backtest.backtest_id,
                     backtest.ticker,
+                    backtest.company_name,
+                    backtest.normalized_ticker,
+                    backtest.display_symbol,
                     backtest.market.value,
                     backtest.strategy_name,
                     backtest.start_date.isoformat(),
@@ -97,9 +104,19 @@ class BacktestRepository:
         return self._row_to_backtest(row)
 
     def _row_to_backtest(self, row) -> BacktestResponse:
+        metadata = build_instrument_metadata(
+            ticker=row["ticker"],
+            market=row["market"],
+            company_name=row["company_name"],
+        )
         return BacktestResponse(
             backtest_id=row["backtest_id"],
             ticker=row["ticker"],
+            company_name=metadata["company_name"]
+            if row["company_name"] in {None, "", "Unknown Company"}
+            else row["company_name"],
+            normalized_ticker=row["normalized_ticker"] or metadata["normalized_ticker"],
+            display_symbol=row["display_symbol"] or metadata["display_symbol"],
             market=row["market"],
             strategy_name=row["strategy_name"],
             start_date=row["start_date"],

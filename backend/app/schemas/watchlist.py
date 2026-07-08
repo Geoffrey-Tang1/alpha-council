@@ -26,6 +26,8 @@ class WatchlistItem(BaseModel):
     ticker: str
     market: MarketCode
     company_name: str | None = None
+    normalized_ticker: str | None = None
+    display_symbol: str | None = None
     notes: str | None = None
     latest_signal: DecisionAction | None = None
     latest_risk_level: str | None = None

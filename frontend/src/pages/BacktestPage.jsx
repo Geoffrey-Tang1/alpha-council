@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { getBacktests, runBacktest } from "../api/client.js";
 import Badge from "../components/ui/Badge.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
-import { formatCurrency, formatDateTime, formatPercent, formatPrice } from "../utils/formatting.js";
+import {
+  formatCurrency,
+  formatInstrument,
+  formatPercent,
+  formatPrice,
+  formatTimestampCompact
+} from "../utils/formatting.js";
+import { enumLabel, strategyLabel } from "../utils/labels.js";
 
 const initialForm = {
   ticker: "NVDA",
@@ -28,6 +36,7 @@ function qualityTone(quality) {
 }
 
 function EquityCurveChart({ points }) {
+  const { t } = useTranslation();
   const chartPoints = useMemo(() => {
     if (!points || points.length === 0) {
       return "";
@@ -51,14 +60,14 @@ function EquityCurveChart({ points }) {
   }, [points]);
 
   if (!points || points.length === 0) {
-    return <p className="muted">No equity curve was produced for this backtest.</p>;
+    return <p className="muted">{t("backtest.noEquityCurve")}</p>;
   }
 
   const first = points[0];
   const last = points[points.length - 1];
 
   return (
-    <div className="equity-chart" role="img" aria-label="Equity curve">
+    <div className="equity-chart" role="img" aria-label={t("backtest.equityCurve")}>
       <svg viewBox="0 0 640 220" preserveAspectRatio="none">
         <line x1="24" y1="196" x2="616" y2="196" />
         <line x1="24" y1="24" x2="24" y2="196" />
@@ -86,6 +95,7 @@ function MetricTile({ label, value }) {
 }
 
 export default function BacktestPage() {
+  const { t } = useTranslation();
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
@@ -139,23 +149,22 @@ export default function BacktestPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Historical simulation</p>
-          <h2>Backtest</h2>
-          <p>
-            Run single-ticker, long-only strategy simulations using the selected AlphaCouncil data provider.
-            Results are research artifacts, not performance promises.
-          </p>
+          <p className="eyebrow">{t("backtest.eyebrow")}</p>
+          <h2>{t("backtest.title")}</h2>
+          <p>{t("backtest.subtitle")}</p>
         </div>
       </div>
 
       <Card>
-        <form className="backtest-form" onSubmit={submitBacktest}>
-          <label>
-            Ticker
+        <p className="muted">{t("backtest.helper")}</p>
+        <p className="muted">{t("backtest.examples")}</p>
+        <form className="backtest-form backtest-form-grid" onSubmit={submitBacktest}>
+          <label className="form-field">
+            {t("common.ticker")}
             <input name="ticker" value={form.ticker} onChange={updateField} required />
           </label>
-          <label>
-            Market
+          <label className="form-field">
+            {t("common.market")}
             <select name="market" value={form.market} onChange={updateField}>
               <option value="US">US</option>
               <option value="JP">JP</option>
@@ -163,24 +172,24 @@ export default function BacktestPage() {
               <option value="KR">KR</option>
             </select>
           </label>
-          <label>
-            Start date
+          <label className="form-field">
+            {t("backtest.startDate")}
             <input name="start_date" type="date" value={form.start_date} onChange={updateField} required />
           </label>
-          <label>
-            End date
+          <label className="form-field">
+            {t("backtest.endDate")}
             <input name="end_date" type="date" value={form.end_date} onChange={updateField} required />
           </label>
-          <label>
-            Strategy
+          <label className="form-field strategy-field">
+            {t("backtest.strategy")}
             <select name="strategy_name" value={form.strategy_name} onChange={updateField}>
-              <option value="moving_average_crossover">Moving average crossover</option>
-              <option value="rsi_oversold_rebound">RSI oversold rebound</option>
-              <option value="breakout_n_day_high">Breakout N-day high</option>
+              <option value="moving_average_crossover">{strategyLabel(t, "moving_average_crossover")}</option>
+              <option value="rsi_oversold_rebound">{strategyLabel(t, "rsi_oversold_rebound")}</option>
+              <option value="breakout_n_day_high">{strategyLabel(t, "breakout_n_day_high")}</option>
             </select>
           </label>
-          <label>
-            Initial capital
+          <label className="form-field capital-field">
+            {t("backtest.initialCapital")}
             <input
               name="initial_capital"
               type="number"
@@ -190,8 +199,8 @@ export default function BacktestPage() {
               required
             />
           </label>
-          <label>
-            Transaction cost bps
+          <label className="form-field">
+            {t("backtest.transactionCostBps")}
             <input
               name="transaction_cost_bps"
               type="number"
@@ -200,13 +209,15 @@ export default function BacktestPage() {
               onChange={updateField}
             />
           </label>
-          <label>
-            Slippage bps
+          <label className="form-field">
+            {t("backtest.slippageBps")}
             <input name="slippage_bps" type="number" min="0" value={form.slippage_bps} onChange={updateField} />
           </label>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Running..." : "Run Backtest"}
-          </Button>
+          <div className="form-actions">
+            <Button type="submit" disabled={loading}>
+              {loading ? t("backtest.running") : t("backtest.run")}
+            </Button>
+          </div>
         </form>
       </Card>
 
@@ -217,15 +228,16 @@ export default function BacktestPage() {
           <Card>
             <div className="card-row">
               <div>
-                <p className="eyebrow">Simulation result</p>
+                <p className="eyebrow">{t("backtest.simulationResult")}</p>
                 <h3>
-                  {result.ticker} · {result.strategy_name}
+                  {formatInstrument(result.company_name, result.display_symbol, result.ticker)}
                 </h3>
-                <p className="muted">{result.warning}</p>
+                <p className="muted">{strategyLabel(t, result.strategy_name)}</p>
+                <p className="muted">{t("backtest.historicalDisclaimer")}</p>
               </div>
               <div className="decision-badges">
                 <Badge tone="neutral">{result.data_provider}</Badge>
-                <Badge tone={qualityTone(result.data_quality)}>{result.data_quality}</Badge>
+                <Badge tone={qualityTone(result.data_quality)}>{enumLabel(t, result.data_quality)}</Badge>
               </div>
             </div>
 
@@ -239,45 +251,45 @@ export default function BacktestPage() {
             )}
 
             <div className="metric-grid">
-              <MetricTile label="Total return" value={formatPercent(result.total_return)} />
-              <MetricTile label="CAGR" value={formatPercent(result.cagr)} />
-              <MetricTile label="Max drawdown" value={formatPercent(result.max_drawdown)} />
-              <MetricTile label="Win rate" value={formatPercent(result.win_rate)} />
-              <MetricTile label="Trades" value={result.number_of_trades} />
-              <MetricTile label="Avg trade return" value={formatPercent(result.average_trade_return)} />
+              <MetricTile label={t("backtest.totalReturn")} value={formatPercent(result.total_return)} />
+              <MetricTile label={t("backtest.cagr")} value={formatPercent(result.cagr)} />
+              <MetricTile label={t("backtest.maxDrawdown")} value={formatPercent(result.max_drawdown)} />
+              <MetricTile label={t("backtest.winRate")} value={formatPercent(result.win_rate)} />
+              <MetricTile label={t("backtest.trades")} value={result.number_of_trades} />
+              <MetricTile label={t("backtest.averageTradeReturn")} value={formatPercent(result.average_trade_return)} />
             </div>
           </Card>
 
           <Card>
-            <h3>Equity Curve</h3>
+            <h3>{t("backtest.equityCurve")}</h3>
             <EquityCurveChart points={result.equity_curve} />
           </Card>
 
           <Card>
-            <h3>Trade Log</h3>
+            <h3>{t("backtest.tradeLog")}</h3>
             {result.trade_log.length === 0 ? (
-              <p className="muted">No closed trades were generated for this simulation.</p>
+              <p className="muted">{t("backtest.noTrades")}</p>
             ) : (
-              <div className="table-wrap">
-                <table>
+              <div className="table-scroll">
+                <table className="data-table trade-log-table">
                   <thead>
                     <tr>
-                      <th>Entry</th>
-                      <th>Entry Price</th>
-                      <th>Exit</th>
-                      <th>Exit Price</th>
-                      <th>Return</th>
-                      <th>Reason</th>
+                      <th>{t("common.entry")}</th>
+                      <th>{t("backtest.entryPrice")}</th>
+                      <th>{t("common.exit")}</th>
+                      <th>{t("backtest.exitPrice")}</th>
+                      <th>{t("common.return")}</th>
+                      <th>{t("backtest.reason")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.trade_log.map((trade, index) => (
                       <tr key={`${trade.entry_date}-${trade.exit_date}-${index}`}>
-                        <td>{trade.entry_date}</td>
-                        <td>{formatPrice(trade.entry_price)}</td>
-                        <td>{trade.exit_date}</td>
-                        <td>{formatPrice(trade.exit_price)}</td>
-                        <td>{formatPercent(trade.return_pct)}</td>
+                        <td className="cell-nowrap">{trade.entry_date}</td>
+                        <td className="cell-nowrap">{formatPrice(trade.entry_price)}</td>
+                        <td className="cell-nowrap">{trade.exit_date}</td>
+                        <td className="cell-nowrap">{formatPrice(trade.exit_price)}</td>
+                        <td className="cell-nowrap">{formatPercent(trade.return_pct)}</td>
                         <td>{trade.reason}</td>
                       </tr>
                     ))}
@@ -289,7 +301,7 @@ export default function BacktestPage() {
 
           <Card>
             <details>
-              <summary>Raw JSON</summary>
+              <summary>{t("common.rawJson")}</summary>
               <pre className="payload-viewer">{JSON.stringify(result, null, 2)}</pre>
             </details>
           </Card>
@@ -299,38 +311,38 @@ export default function BacktestPage() {
       <Card>
         <div className="card-row">
           <div>
-            <h3>Backtest History</h3>
-            <p className="muted">Recent saved simulation runs.</p>
+            <h3>{t("backtest.history")}</h3>
+            <p className="muted">{t("backtest.historySubtitle")}</p>
           </div>
           <Button type="button" onClick={loadHistory} disabled={historyLoading}>
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
         {history.length === 0 ? (
-          <p className="empty-cell">{historyLoading ? "Loading..." : "No backtests saved yet."}</p>
+          <p className="empty-cell">{historyLoading ? t("common.loading") : t("backtest.noHistory")}</p>
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="table-scroll">
+            <table className="data-table backtest-history-table">
               <thead>
                 <tr>
-                  <th>Created</th>
-                  <th>Ticker</th>
-                  <th>Market</th>
-                  <th>Strategy</th>
-                  <th>Data</th>
-                  <th>Total Return</th>
-                  <th>Trades</th>
+                  <th>{t("common.created")}</th>
+                  <th>{t("common.instrument")}</th>
+                  <th>{t("common.market")}</th>
+                  <th>{t("backtest.strategy")}</th>
+                  <th>{t("common.data")}</th>
+                  <th>{t("backtest.totalReturn")}</th>
+                  <th>{t("backtest.trades")}</th>
                 </tr>
               </thead>
               <tbody>
                 {history.map((item) => (
                   <tr key={item.backtest_id}>
-                    <td>{formatDateTime(item.created_at)}</td>
-                    <td>{item.ticker}</td>
-                    <td>{item.market}</td>
-                    <td>{item.strategy_name}</td>
+                    <td className="cell-nowrap">{formatTimestampCompact(item.created_at)}</td>
+                    <td className="instrument-cell">{formatInstrument(item.company_name, item.display_symbol, item.ticker)}</td>
+                    <td className="cell-nowrap">{item.market}</td>
+                    <td>{strategyLabel(t, item.strategy_name)}</td>
                     <td>
-                      {item.data_provider} · {item.data_quality}
+                      {item.data_provider} · {enumLabel(t, item.data_quality)}
                     </td>
                     <td>{formatPercent(item.total_return)}</td>
                     <td>{item.number_of_trades}</td>

@@ -8,6 +8,9 @@ from app.schemas.common import DataSource
 class DecisionResponse(BaseModel):
     decision_id: str
     ticker: str
+    company_name: str = "Unknown Company"
+    normalized_ticker: str = ""
+    display_symbol: str = ""
     market: MarketCode
     latest_price: float | None
     market_status: MarketStatus
@@ -38,6 +41,9 @@ class DecisionSummary(BaseModel):
     decision_id: str
     timestamp: str
     ticker: str
+    company_name: str = "Unknown Company"
+    normalized_ticker: str = ""
+    display_symbol: str = ""
     market: MarketCode
     decision: DecisionAction
     confidence: float = Field(ge=0, le=1)

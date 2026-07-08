@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { getDecisions } from "../api/client.js";
 import Card from "../components/ui/Card.jsx";
-import { formatConfidence, formatDateTime, formatPrice } from "../utils/formatting.js";
+import {
+  formatConfidence,
+  formatInstrument,
+  formatPrice,
+  formatTimestampCompact,
+  truncateText
+} from "../utils/formatting.js";
+import { enumLabel } from "../utils/labels.js";
 
 export default function DecisionLogPage({ onSelectDecision }) {
+  const { t } = useTranslation();
   const [decisions, setDecisions] = useState([]);
   const [error, setError] = useState("");
 
@@ -18,56 +27,62 @@ export default function DecisionLogPage({ onSelectDecision }) {
     <div className="page">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Audit trail</p>
-          <h2>Decision Log</h2>
-          <p>Saved research decisions from the local Phase 1 SQLite database.</p>
+          <p className="eyebrow">{t("decisionLog.eyebrow")}</p>
+          <h2>{t("decisionLog.title")}</h2>
+          <p>{t("decisionLog.subtitle")}</p>
         </div>
       </div>
 
       {error && <Card className="error-card">{error}</Card>}
 
       <Card>
-        <table>
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>Ticker</th>
-              <th>Market</th>
-              <th>Decision</th>
-              <th>Provider</th>
-              <th>Data</th>
-              <th>Confidence</th>
-              <th>Latest Price</th>
-              <th>Explanation</th>
-              <th>Inspect</th>
-            </tr>
-          </thead>
-          <tbody>
-            {decisions.map((item) => (
-              <tr key={item.decision_id}>
-                <td>{formatDateTime(item.timestamp)}</td>
-                <td>{item.ticker}</td>
-                <td>{item.market}</td>
-                <td>{item.decision}</td>
-                <td>{item.data_provider || "mock"}</td>
-                <td>{item.data_quality || "MOCK"}</td>
-                <td>{formatConfidence(item.confidence)}</td>
-                <td>{formatPrice(item.latest_price)}</td>
-                <td>{item.final_explanation}</td>
-                <td>
-                  <button className="link-button" onClick={() => onSelectDecision(item.decision_id)}>
-                    Open payload
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {decisions.length === 0 && (
+        <div className="table-scroll">
+          <table className="data-table decision-log-table">
+            <thead>
               <tr>
-                <td colSpan="10" className="empty-cell">No decisions saved yet.</td>
+                <th>{t("common.timestamp")}</th>
+                <th>{t("common.instrument")}</th>
+                <th>{t("common.market")}</th>
+                <th>{t("common.decision")}</th>
+                <th>{t("common.provider")}</th>
+                <th>{t("common.data")}</th>
+                <th>{t("common.confidence")}</th>
+                <th>{t("watchlist.latestPrice")}</th>
+                <th>{t("decisionLog.explanation")}</th>
+                <th>{t("common.inspect")}</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {decisions.map((item) => (
+                <tr key={item.decision_id}>
+                  <td className="cell-nowrap">{formatTimestampCompact(item.timestamp)}</td>
+                  <td className="instrument-cell">
+                    {formatInstrument(item.company_name, item.display_symbol, item.ticker)}
+                  </td>
+                  <td className="cell-nowrap">{item.market}</td>
+                  <td className="cell-nowrap">{enumLabel(t, item.decision)}</td>
+                  <td className="cell-nowrap">{item.data_provider || "mock"}</td>
+                  <td className="cell-nowrap">{enumLabel(t, item.data_quality || "MOCK")}</td>
+                  <td className="cell-nowrap">{formatConfidence(item.confidence)}</td>
+                  <td className="cell-nowrap">{formatPrice(item.latest_price)}</td>
+                  <td className="explanation-cell" title={item.final_explanation}>
+                    <span className="cell-clamp-2">{truncateText(item.final_explanation, 180)}</span>
+                  </td>
+                  <td className="cell-nowrap">
+                    <button className="link-button" onClick={() => onSelectDecision(item.decision_id)}>
+                      {t("common.viewDetail")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {decisions.length === 0 && (
+                <tr>
+                  <td colSpan="10" className="empty-cell">{t("decisionLog.noDecisions")}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );
