@@ -4,7 +4,7 @@ AlphaCouncil is a multi-agent global equity trading decision platform for resear
 
 This MVP includes a FastAPI backend, React + Vite frontend, SQLite-backed decision history, deterministic mock data, market status logic, and an optional yfinance market-data provider.
 
-Suggested repository name: `alpha-council`
+
 
 ## MVP Boundary
 
