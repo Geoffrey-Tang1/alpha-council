@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.db.database import get_connection, initialize_database
 from app.schemas.decisions import DecisionResponse
 
@@ -11,6 +12,7 @@ class DecisionRepository:
 
     def save(self, decision: DecisionResponse) -> DecisionResponse:
         payload = decision.model_dump(mode="json")
+        payload = self._normalize_legacy_payload(payload)
         payload["saved"] = True
         saved_decision = DecisionResponse.model_validate(payload)
         now = datetime.now(timezone.utc).isoformat()
@@ -22,6 +24,9 @@ class DecisionRepository:
                     decision_id,
                     timestamp,
                     ticker,
+                    company_name,
+                    normalized_ticker,
+                    display_symbol,
                     market,
                     latest_price,
                     market_status,
@@ -31,12 +36,15 @@ class DecisionRepository:
                     full_payload_json,
                     created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     saved_decision.decision_id,
                     saved_decision.timestamp,
                     saved_decision.ticker,
+                    saved_decision.company_name,
+                    saved_decision.normalized_ticker,
+                    saved_decision.display_symbol,
                     saved_decision.market.value,
                     saved_decision.latest_price,
                     saved_decision.market_status.value,
@@ -85,6 +93,19 @@ class DecisionRepository:
         return DecisionResponse.model_validate(self._normalize_legacy_payload(payload))
 
     def _normalize_legacy_payload(self, payload: dict) -> dict:
+        metadata = build_instrument_metadata(
+            ticker=payload.get("ticker", ""),
+            market=payload.get("market", "US"),
+            company_name=payload.get("company_name"),
+        )
+        payload["company_name"] = (
+            metadata["company_name"]
+            if payload.get("company_name") in {None, "", "Unknown Company"}
+            else payload["company_name"]
+        )
+        payload["normalized_ticker"] = payload.get("normalized_ticker") or metadata["normalized_ticker"]
+        payload["display_symbol"] = payload.get("display_symbol") or metadata["display_symbol"]
+
         if "data_disclaimer" not in payload:
             payload["data_disclaimer"] = "MVP Mode: using deterministic mock data. Not real market data."
 

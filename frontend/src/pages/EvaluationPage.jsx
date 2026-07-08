@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { getEvaluation, getEvaluations, getEvaluationSummary, runEvaluation } from "../api/client.js";
 import Badge from "../components/ui/Badge.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
-import { formatConfidence, formatDateTime, formatPercent } from "../utils/formatting.js";
+import { formatConfidence, formatInstrument, formatPercent, formatTimestampCompact } from "../utils/formatting.js";
+import { enumLabel } from "../utils/labels.js";
 
 const initialFilters = {
   ticker: "",
@@ -51,6 +53,7 @@ function MetricTile({ label, value }) {
 }
 
 export default function EvaluationPage() {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
@@ -122,18 +125,15 @@ export default function EvaluationPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Research analytics</p>
-          <h2>Decision Evaluation</h2>
-          <p>
-            Review what happened after saved AlphaCouncil decisions using historical provider rows. This is
-            observational research, not a claim of future profitability.
-          </p>
+          <p className="eyebrow">{t("evaluation.eyebrow")}</p>
+          <h2>{t("evaluation.title")}</h2>
+          <p>{t("evaluation.subtitle")}</p>
         </div>
         <div className="header-actions">
           <Button onClick={evaluateAll} disabled={running}>
-            {running ? "Evaluating..." : "Evaluate All Eligible"}
+            {running ? t("evaluation.evaluating") : t("evaluation.evaluateAll")}
           </Button>
-          <Button onClick={() => loadData(filters)} disabled={loading}>Refresh</Button>
+          <Button onClick={() => loadData(filters)} disabled={loading}>{t("common.refresh")}</Button>
         </div>
       </div>
 
@@ -141,31 +141,31 @@ export default function EvaluationPage() {
 
       <Card>
         <p className="data-disclaimer">
-          Decision evaluation is historical and observational only. It does not prove future profitability.
+          {t("evaluation.disclaimer")}
         </p>
         {summary?.warning && <p className="muted">{summary.warning}</p>}
       </Card>
 
       <div className="metric-grid">
-        <MetricTile label="Total evaluated" value={summary?.total_evaluated ?? 0} />
-        <MetricTile label="Favorable" value={summary?.favorable_count ?? 0} />
-        <MetricTile label="Unfavorable" value={summary?.unfavorable_count ?? 0} />
-        <MetricTile label="Neutral" value={summary?.neutral_count ?? 0} />
-        <MetricTile label="Insufficient data" value={summary?.insufficient_data_count ?? 0} />
-        <MetricTile label="Avg 20d return" value={formatPercent(summary?.average_forward_return_20d)} />
-        <MetricTile label="Avg 60d return" value={formatPercent(summary?.average_forward_return_60d)} />
+        <MetricTile label={t("evaluation.totalEvaluated")} value={summary?.total_evaluated ?? 0} />
+        <MetricTile label={t("evaluation.favorable")} value={summary?.favorable_count ?? 0} />
+        <MetricTile label={t("evaluation.unfavorable")} value={summary?.unfavorable_count ?? 0} />
+        <MetricTile label={t("evaluation.neutral")} value={summary?.neutral_count ?? 0} />
+        <MetricTile label={t("evaluation.insufficientData")} value={summary?.insufficient_data_count ?? 0} />
+        <MetricTile label={t("evaluation.avg20dReturn")} value={formatPercent(summary?.average_forward_return_20d)} />
+        <MetricTile label={t("evaluation.avg60dReturn")} value={formatPercent(summary?.average_forward_return_60d)} />
       </div>
 
       <Card>
         <form className="evaluation-filters" onSubmit={applyFilters}>
           <label>
-            Ticker
+            {t("common.ticker")}
             <input name="ticker" value={filters.ticker} onChange={updateFilter} placeholder="NVDA" />
           </label>
           <label>
-            Market
+            {t("common.market")}
             <select name="market" value={filters.market} onChange={updateFilter}>
-              <option value="">All</option>
+              <option value="">{t("common.all")}</option>
               <option value="US">US</option>
               <option value="JP">JP</option>
               <option value="TW">TW</option>
@@ -173,62 +173,62 @@ export default function EvaluationPage() {
             </select>
           </label>
           <label>
-            Decision
+            {t("common.decision")}
             <select name="decision" value={filters.decision} onChange={updateFilter}>
-              <option value="">All</option>
-              <option value="BUY">BUY</option>
-              <option value="SELL">SELL</option>
-              <option value="HOLD">HOLD</option>
-              <option value="WATCH">WATCH</option>
-              <option value="AVOID">AVOID</option>
+              <option value="">{t("common.all")}</option>
+              <option value="BUY">{enumLabel(t, "BUY")}</option>
+              <option value="SELL">{enumLabel(t, "SELL")}</option>
+              <option value="HOLD">{enumLabel(t, "HOLD")}</option>
+              <option value="WATCH">{enumLabel(t, "WATCH")}</option>
+              <option value="AVOID">{enumLabel(t, "AVOID")}</option>
             </select>
           </label>
           <label>
-            Direction
+            {t("evaluation.direction")}
             <select name="directional_result" value={filters.directional_result} onChange={updateFilter}>
-              <option value="">All</option>
-              <option value="FAVORABLE">FAVORABLE</option>
-              <option value="UNFAVORABLE">UNFAVORABLE</option>
-              <option value="NEUTRAL_MONITORING">NEUTRAL_MONITORING</option>
-              <option value="NEUTRAL_HOLD">NEUTRAL_HOLD</option>
-              <option value="MISSED_UPSIDE">MISSED_UPSIDE</option>
-              <option value="INSUFFICIENT_DATA">INSUFFICIENT_DATA</option>
+              <option value="">{t("common.all")}</option>
+              <option value="FAVORABLE">{enumLabel(t, "FAVORABLE")}</option>
+              <option value="UNFAVORABLE">{enumLabel(t, "UNFAVORABLE")}</option>
+              <option value="NEUTRAL_MONITORING">{enumLabel(t, "NEUTRAL_MONITORING")}</option>
+              <option value="NEUTRAL_HOLD">{enumLabel(t, "NEUTRAL_HOLD")}</option>
+              <option value="MISSED_UPSIDE">{enumLabel(t, "MISSED_UPSIDE")}</option>
+              <option value="INSUFFICIENT_DATA">{enumLabel(t, "INSUFFICIENT_DATA")}</option>
             </select>
           </label>
           <label>
-            Confidence
+            {t("common.confidence")}
             <select name="confidence_bucket" value={filters.confidence_bucket} onChange={updateFilter}>
-              <option value="">All</option>
+              <option value="">{t("common.all")}</option>
               <option value="0.0-0.4">0.0-0.4</option>
               <option value="0.4-0.6">0.4-0.6</option>
               <option value="0.6-0.8">0.6-0.8</option>
               <option value="0.8-1.0">0.8-1.0</option>
             </select>
           </label>
-          <Button type="submit" disabled={loading}>{loading ? "Loading..." : "Apply Filters"}</Button>
+          <Button type="submit" disabled={loading}>{loading ? t("common.loading") : t("common.applyFilters")}</Button>
         </form>
       </Card>
 
       <Card>
-        <h3>Evaluations</h3>
-        <div className="table-wrap">
-          <table>
+        <h3>{t("evaluation.evaluations")}</h3>
+        <div className="table-scroll">
+          <table className="data-table evaluation-table">
             <thead>
               <tr>
-                <th>Ticker</th>
-                <th>Market</th>
-                <th>Decision</th>
-                <th>Confidence</th>
-                <th>Decision Time</th>
+                <th>{t("common.instrument")}</th>
+                <th>{t("common.market")}</th>
+                <th>{t("common.decision")}</th>
+                <th>{t("common.confidence")}</th>
+                <th>{t("evaluation.decisionTime")}</th>
                 <th>1d</th>
                 <th>5d</th>
                 <th>20d</th>
                 <th>60d</th>
-                <th>DD 20d</th>
-                <th>DD 60d</th>
-                <th>Result</th>
-                <th>Data</th>
-                <th>Evaluated</th>
+                <th>{t("evaluation.dd20d")}</th>
+                <th>{t("evaluation.dd60d")}</th>
+                <th>{t("evaluation.result")}</th>
+                <th>{t("common.data")}</th>
+                <th>{t("evaluation.evaluated")}</th>
               </tr>
             </thead>
             <tbody>
@@ -238,25 +238,25 @@ export default function EvaluationPage() {
                   className="clickable-row"
                   onClick={() => openEvaluation(item.evaluation_id)}
                 >
-                  <td>{item.ticker}</td>
-                  <td>{item.market}</td>
-                  <td>{item.decision}</td>
-                  <td>{formatConfidence(item.confidence)}</td>
-                  <td>{formatDateTime(item.decision_timestamp)}</td>
-                  <td>{formatPercent(item.forward_return_1d)}</td>
-                  <td>{formatPercent(item.forward_return_5d)}</td>
-                  <td>{formatPercent(item.forward_return_20d)}</td>
-                  <td>{formatPercent(item.forward_return_60d)}</td>
-                  <td>{formatPercent(item.max_drawdown_20d)}</td>
-                  <td>{formatPercent(item.max_drawdown_60d)}</td>
-                  <td><Badge tone={resultTone(item.directional_result)}>{item.directional_result}</Badge></td>
-                  <td><Badge tone={qualityTone(item.data_quality)}>{item.data_quality}</Badge></td>
-                  <td>{formatDateTime(item.evaluated_at)}</td>
+                  <td className="instrument-cell">{formatInstrument(item.company_name, item.display_symbol, item.ticker)}</td>
+                  <td className="cell-nowrap">{item.market}</td>
+                  <td className="cell-nowrap">{enumLabel(t, item.decision)}</td>
+                  <td className="cell-nowrap">{formatConfidence(item.confidence)}</td>
+                  <td className="cell-nowrap">{formatTimestampCompact(item.decision_timestamp)}</td>
+                  <td className="cell-nowrap">{formatPercent(item.forward_return_1d)}</td>
+                  <td className="cell-nowrap">{formatPercent(item.forward_return_5d)}</td>
+                  <td className="cell-nowrap">{formatPercent(item.forward_return_20d)}</td>
+                  <td className="cell-nowrap">{formatPercent(item.forward_return_60d)}</td>
+                  <td className="cell-nowrap">{formatPercent(item.max_drawdown_20d)}</td>
+                  <td className="cell-nowrap">{formatPercent(item.max_drawdown_60d)}</td>
+                  <td className="cell-nowrap"><Badge tone={resultTone(item.directional_result)}>{enumLabel(t, item.directional_result)}</Badge></td>
+                  <td className="cell-nowrap"><Badge tone={qualityTone(item.data_quality)}>{enumLabel(t, item.data_quality)}</Badge></td>
+                  <td className="cell-nowrap">{formatTimestampCompact(item.evaluated_at)}</td>
                 </tr>
               ))}
               {evaluations.length === 0 && (
                 <tr>
-                  <td colSpan="14" className="empty-cell">No evaluations match the current filters.</td>
+                  <td colSpan="14" className="empty-cell">{t("evaluation.noEvaluations")}</td>
                 </tr>
               )}
             </tbody>
@@ -268,20 +268,20 @@ export default function EvaluationPage() {
         <Card>
           <div className="card-row">
             <div>
-              <h3>{selectedEvaluation.ticker} Evaluation Detail</h3>
+              <h3>{formatInstrument(selectedEvaluation.company_name, selectedEvaluation.display_symbol, selectedEvaluation.ticker)} {t("evaluation.detail")}</h3>
               <p className="muted">{selectedEvaluation.evaluation_summary}</p>
             </div>
             <Badge tone={resultTone(selectedEvaluation.directional_result)}>
-              {selectedEvaluation.directional_result}
+              {enumLabel(t, selectedEvaluation.directional_result)}
             </Badge>
           </div>
           <dl className="detail-list">
             <div>
-              <dt>Original decision</dt>
+              <dt>{t("evaluation.originalDecision")}</dt>
               <dd>{selectedEvaluation.decision_id}</dd>
             </div>
             <div>
-              <dt>Forward returns</dt>
+              <dt>{t("evaluation.forwardReturns")}</dt>
               <dd>
                 1d {formatPercent(selectedEvaluation.forward_return_1d)} · 5d{" "}
                 {formatPercent(selectedEvaluation.forward_return_5d)} · 20d{" "}
@@ -290,18 +290,19 @@ export default function EvaluationPage() {
               </dd>
             </div>
             <div>
-              <dt>Drawdown / runup</dt>
+              <dt>{t("evaluation.drawdownRunup")}</dt>
               <dd>
-                DD20 {formatPercent(selectedEvaluation.max_drawdown_20d)} · DD60{" "}
-                {formatPercent(selectedEvaluation.max_drawdown_60d)} · Runup20{" "}
-                {formatPercent(selectedEvaluation.max_runup_20d)} · Runup60{" "}
+                {t("evaluation.dd20d")} {formatPercent(selectedEvaluation.max_drawdown_20d)} ·{" "}
+                {t("evaluation.dd60d")} {formatPercent(selectedEvaluation.max_drawdown_60d)} ·{" "}
+                {t("evaluation.runup20d")} {formatPercent(selectedEvaluation.max_runup_20d)} ·{" "}
+                {t("evaluation.runup60d")}{" "}
                 {formatPercent(selectedEvaluation.max_runup_60d)}
               </dd>
             </div>
             <div>
-              <dt>Data</dt>
+              <dt>{t("common.data")}</dt>
               <dd>
-                {selectedEvaluation.data_provider} · {selectedEvaluation.data_quality}
+                {selectedEvaluation.data_provider} · {enumLabel(t, selectedEvaluation.data_quality)}
               </dd>
             </div>
           </dl>

@@ -67,6 +67,18 @@ def test_yfinance_provider_uses_mocked_yfinance_history_and_latest_price():
     assert status["quality"] == "REAL"
 
 
+def test_yfinance_provider_returns_profile_metadata_from_info():
+    fake_yfinance = FakeYFinanceModule(SuccessfulFakeTicker)
+    provider = YFinanceDataProvider(yf_module=fake_yfinance)
+
+    profile = provider.get_company_profile("7203", MarketCode.JP)
+
+    assert profile["ticker"] == "7203"
+    assert profile["normalized_ticker"] == "7203.T"
+    assert profile["display_symbol"] == "7203.T"
+    assert profile["company_name"] == "7203.T Company"
+
+
 def test_yfinance_provider_fallback_to_mock_is_marked_degraded():
     fake_yfinance = FakeYFinanceModule(EmptyHistoryFakeTicker)
     provider = YFinanceDataProvider(yf_module=fake_yfinance)

@@ -12,6 +12,9 @@ def test_watchlist_crud(client):
     created = create_response.json()
     assert created["ticker"] == "NVDA"
     assert created["market"] == "US"
+    assert created["company_name"] == "NVIDIA Corporation"
+    assert created["normalized_ticker"] == "NVDA"
+    assert created["display_symbol"] == "NVDA"
     assert created["latest_signal"] == "WATCH"
     assert created["notes"] == "AI infrastructure watch candidate."
 
@@ -35,7 +38,9 @@ def test_watchlist_crud(client):
 
     get_response = client.get(f"/api/v1/watchlist/{created['id']}")
     assert get_response.status_code == 200
-    assert get_response.json()["id"] == created["id"]
+    fetched = get_response.json()
+    assert fetched["id"] == created["id"]
+    assert fetched["company_name"] == "NVIDIA Corporation"
 
     delete_response = client.delete(f"/api/v1/watchlist/{created['id']}")
     assert delete_response.status_code == 204

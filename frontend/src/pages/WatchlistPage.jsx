@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { addWatchlistItem, deleteWatchlistItem, getWatchlist } from "../api/client.js";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
-import { formatPrice } from "../utils/formatting.js";
+import { formatInstrument, formatPrice } from "../utils/formatting.js";
+import { enumLabel } from "../utils/labels.js";
 
 const initialForm = {
   ticker: "",
@@ -12,6 +14,7 @@ const initialForm = {
 };
 
 export default function WatchlistPage({ onNavigate }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
@@ -64,20 +67,20 @@ export default function WatchlistPage({ onNavigate }) {
     <div className="page">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Research queue</p>
-          <h2>Watchlist</h2>
-          <p>Track tickers for future AlphaCouncil review. Signals remain mock-data based in this MVP.</p>
+          <p className="eyebrow">{t("watchlist.eyebrow")}</p>
+          <h2>{t("watchlist.title")}</h2>
+          <p>{t("watchlist.subtitle")}</p>
         </div>
       </div>
 
       <Card>
         <form className="watchlist-form" onSubmit={submitWatchlistItem}>
           <label>
-            Ticker
+            {t("common.ticker")}
             <input name="ticker" value={form.ticker} onChange={updateField} placeholder="NVDA" required />
           </label>
           <label>
-            Market
+            {t("common.market")}
             <select name="market" value={form.market} onChange={updateField}>
               <option value="US">US</option>
               <option value="JP">JP</option>
@@ -86,52 +89,54 @@ export default function WatchlistPage({ onNavigate }) {
             </select>
           </label>
           <label>
-            Notes
-            <input name="notes" value={form.notes} onChange={updateField} placeholder="Reason to monitor" />
+            {t("common.notes")}
+            <input name="notes" value={form.notes} onChange={updateField} placeholder={t("watchlist.notesPlaceholder")} />
           </label>
-          <Button type="submit" disabled={loading}>{loading ? "Adding..." : "Add Ticker"}</Button>
+          <Button type="submit" disabled={loading}>{loading ? t("watchlist.adding") : t("watchlist.addTicker")}</Button>
         </form>
       </Card>
 
       {error && <Card className="error-card">{error}</Card>}
 
       <Card>
-        <table>
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th>Market</th>
-              <th>Latest Signal</th>
-              <th>Risk</th>
-              <th>Latest Price</th>
-              <th>Notes</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.ticker}</td>
-                <td>{item.market}</td>
-                <td>{item.latest_signal || "WATCH"}</td>
-                <td>{item.latest_risk_level || "UNKNOWN"}</td>
-                <td>{formatPrice(item.latest_price)}</td>
-                <td>{item.notes || ""}</td>
-                <td>
-                  <div className="table-actions">
-                    <Button onClick={() => onNavigate("analysis")}>Analyze</Button>
-                    <Button onClick={() => removeItem(item.id)}>Remove</Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && (
+        <div className="table-scroll">
+          <table className="data-table watchlist-table">
+            <thead>
               <tr>
-                <td colSpan="7" className="empty-cell">No watchlist items yet.</td>
+                <th>{t("common.instrument")}</th>
+                <th>{t("common.market")}</th>
+                <th>{t("watchlist.latestSignal")}</th>
+                <th>{t("common.risk")}</th>
+                <th>{t("watchlist.latestPrice")}</th>
+                <th>{t("common.notes")}</th>
+                <th>{t("common.actions")}</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td className="instrument-cell">{formatInstrument(item.company_name, item.display_symbol, item.ticker)}</td>
+                  <td className="cell-nowrap">{item.market}</td>
+                  <td className="cell-nowrap">{enumLabel(t, item.latest_signal || "WATCH")}</td>
+                  <td className="cell-nowrap">{enumLabel(t, item.latest_risk_level || "UNKNOWN")}</td>
+                  <td className="cell-nowrap">{formatPrice(item.latest_price)}</td>
+                  <td>{item.notes || ""}</td>
+                  <td className="cell-nowrap">
+                    <div className="table-actions">
+                      <Button onClick={() => onNavigate("analysis")}>{t("common.analyze")}</Button>
+                      <Button onClick={() => removeItem(item.id)}>{t("common.remove")}</Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="empty-cell">{t("watchlist.noItems")}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );

@@ -29,6 +29,9 @@ class DecisionEvaluationResponse(BaseModel):
     evaluation_id: str
     decision_id: str
     ticker: str
+    company_name: str = "Unknown Company"
+    normalized_ticker: str = ""
+    display_symbol: str = ""
     market: MarketCode
     decision: DecisionAction
     confidence: float = Field(ge=0, le=1)

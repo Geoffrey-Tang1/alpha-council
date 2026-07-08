@@ -6,6 +6,7 @@ import pandas as pd
 
 from app.core.constants import DecisionAction, MarketCode
 from app.data_providers.base import MarketDataProvider
+from app.data_providers.instrument_metadata import build_instrument_metadata
 from app.data_providers.provider_registry import get_data_provider
 from app.db.repositories.decision_repository import DecisionRepository
 from app.db.repositories.evaluation_repository import EvaluationRepository
@@ -236,10 +237,14 @@ class EvaluationService:
             data_warnings.append("Fewer than 60 forward trading rows were available from yfinance.")
 
         directional_result = self._directional_result(decision.decision, returns)
+        metadata = self._decision_metadata(decision)
         return DecisionEvaluationResponse(
             evaluation_id=f"eval_{uuid4().hex}",
             decision_id=decision.decision_id,
             ticker=decision.ticker,
+            company_name=metadata["company_name"],
+            normalized_ticker=metadata["normalized_ticker"],
+            display_symbol=metadata["display_symbol"],
             market=decision.market,
             decision=decision.decision,
             confidence=decision.confidence,
@@ -331,10 +336,14 @@ class EvaluationService:
         data_warnings: list[str],
         decision_price: float | None = None,
     ) -> DecisionEvaluationResponse:
+        metadata = self._decision_metadata(decision)
         return DecisionEvaluationResponse(
             evaluation_id=f"eval_{uuid4().hex}",
             decision_id=decision.decision_id,
             ticker=decision.ticker,
+            company_name=metadata["company_name"],
+            normalized_ticker=metadata["normalized_ticker"],
+            display_symbol=metadata["display_symbol"],
             market=decision.market,
             decision=decision.decision,
             confidence=decision.confidence,
@@ -359,10 +368,14 @@ class EvaluationService:
         )
 
     def _error_evaluation(self, decision: DecisionResponse, evaluated_at: str, error: str) -> DecisionEvaluationResponse:
+        metadata = self._decision_metadata(decision)
         return DecisionEvaluationResponse(
             evaluation_id=f"eval_{uuid4().hex}",
             decision_id=decision.decision_id,
             ticker=decision.ticker,
+            company_name=metadata["company_name"],
+            normalized_ticker=metadata["normalized_ticker"],
+            display_symbol=metadata["display_symbol"],
             market=decision.market,
             decision=decision.decision,
             confidence=decision.confidence,
@@ -484,3 +497,17 @@ class EvaluationService:
         if confidence < 0.8:
             return "0.6-0.8"
         return "0.8-1.0"
+
+    def _decision_metadata(self, decision: DecisionResponse) -> dict[str, str]:
+        metadata = build_instrument_metadata(
+            ticker=decision.ticker,
+            market=decision.market,
+            company_name=decision.company_name,
+        )
+        return {
+            "company_name": metadata["company_name"]
+            if decision.company_name in {None, "", "Unknown Company"}
+            else decision.company_name,
+            "normalized_ticker": decision.normalized_ticker or metadata["normalized_ticker"],
+            "display_symbol": decision.display_symbol or metadata["display_symbol"],
+        }

@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { getDataSourceStatus } from "../../api/client.js";
 import Button from "../ui/Button.jsx";
+import LanguageSwitcher from "./LanguageSwitcher.jsx";
 
 export default function AppShell({ currentPage, onNavigate, children }) {
+  const { t } = useTranslation();
   const [dataSourceStatus, setDataSourceStatus] = useState(null);
   const navItems = [
-    ["dashboard", "Dashboard"],
-    ["analysis", "Stock Analysis"],
-    ["watchlist", "Watchlist"],
-    ["backtest", "Backtest"],
-    ["evaluations", "Decision Evaluation"],
-    ["decisions", "Decision Log"]
+    ["dashboard", "sidebar.nav.dashboard"],
+    ["analysis", "sidebar.nav.analysis"],
+    ["watchlist", "sidebar.nav.watchlist"],
+    ["backtest", "sidebar.nav.backtest"],
+    ["evaluations", "sidebar.nav.evaluations"],
+    ["decisions", "sidebar.nav.decisions"]
   ];
 
   useEffect(() => {
@@ -28,25 +31,26 @@ export default function AppShell({ currentPage, onNavigate, children }) {
 
   const bannerText =
     dataSourceStatus?.data_provider === "yfinance"
-      ? "Data provider: yfinance. Data may be delayed or incomplete."
-      : "MVP Mode: using mock data. Not real market data.";
+      ? t("banner.yfinance")
+      : t("banner.mock");
   const bannerClass = dataSourceStatus?.data_provider === "yfinance" ? "mock-banner provider-banner" : "mock-banner";
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div>
-          <p className="eyebrow">Research desk</p>
-          <h1>AlphaCouncil</h1>
+          <p className="eyebrow">{t("sidebar.researchDesk")}</p>
+          <h1>{t("app.name")}</h1>
         </div>
-        <nav className="nav-list" aria-label="Primary navigation">
-          {navItems.map(([page, label]) => (
+        <LanguageSwitcher />
+        <nav className="nav-list" aria-label={t("sidebar.navigation")}>
+          {navItems.map(([page, labelKey]) => (
             <Button key={page} className={currentPage === page ? "active" : ""} onClick={() => onNavigate(page)}>
-              {label}
+              {t(labelKey)}
             </Button>
           ))}
         </nav>
-        <p className="sidebar-note">MVP research support only. No live trading.</p>
+        <p className="sidebar-note">{t("sidebar.note")}</p>
       </aside>
       <main className="content">
         <div className={bannerClass}>{bannerText}</div>

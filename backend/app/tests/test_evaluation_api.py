@@ -19,6 +19,9 @@ def test_evaluation_api_response_shape_and_summary(client):
     assert evaluation["evaluation_id"].startswith("eval_")
     assert evaluation["decision_id"] == decision_id
     assert evaluation["ticker"] == "NVDA"
+    assert evaluation["company_name"] == "NVIDIA Corporation"
+    assert evaluation["normalized_ticker"] == "NVDA"
+    assert evaluation["display_symbol"] == "NVDA"
     assert evaluation["market"] == "US"
     assert evaluation["evaluation_status"] in {"EVALUATED", "INSUFFICIENT_DATA", "ERROR"}
     assert evaluation["directional_result"] in {
@@ -43,7 +46,9 @@ def test_evaluation_api_response_shape_and_summary(client):
 
     detail_response = client.get(f"/api/v1/evaluations/{evaluation['evaluation_id']}")
     assert detail_response.status_code == 200
-    assert detail_response.json()["evaluation_id"] == evaluation["evaluation_id"]
+    detail = detail_response.json()
+    assert detail["evaluation_id"] == evaluation["evaluation_id"]
+    assert detail["company_name"] == "NVIDIA Corporation"
 
     summary_response = client.get("/api/v1/evaluations/summary")
     assert summary_response.status_code == 200
