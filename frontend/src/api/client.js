@@ -37,6 +37,10 @@ export function getWatchlist() {
   return request("/watchlist");
 }
 
+export function getWatchlistSummary() {
+  return request("/watchlist/summary");
+}
+
 export function addWatchlistItem(payload) {
   return request("/watchlist", {
     method: "POST",
@@ -85,4 +89,36 @@ export function getBacktests() {
 
 export function getBacktest(backtestId) {
   return request(`/backtests/${backtestId}`);
+}
+
+export function runEvaluation(payload) {
+  return request("/evaluations/run", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function evaluateDecision(decisionId) {
+  return request(`/evaluations/decision/${decisionId}`, {
+    method: "POST"
+  });
+}
+
+export function getEvaluations(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, value);
+    }
+  });
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return request(`/evaluations${suffix}`);
+}
+
+export function getEvaluation(evaluationId) {
+  return request(`/evaluations/${evaluationId}`);
+}
+
+export function getEvaluationSummary() {
+  return request("/evaluations/summary");
 }

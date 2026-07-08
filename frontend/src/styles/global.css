@@ -235,7 +235,8 @@ select {
 }
 
 .watchlist-form,
-.backtest-form {
+.backtest-form,
+.evaluation-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
@@ -307,6 +308,13 @@ select {
 
 .warning-list {
   color: #92400e;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
 }
 
 .data-disclaimer {
@@ -428,6 +436,14 @@ td {
 th {
   color: var(--muted);
   font-size: 13px;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #f8fafc;
 }
 
 .empty-cell {

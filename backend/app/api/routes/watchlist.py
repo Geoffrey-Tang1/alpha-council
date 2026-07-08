@@ -1,6 +1,12 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.watchlist import WatchlistItem, WatchlistItemCreate, WatchlistItemUpdate, WatchlistResponse
+from app.schemas.watchlist import (
+    WatchlistItem,
+    WatchlistItemCreate,
+    WatchlistItemUpdate,
+    WatchlistResponse,
+    WatchlistSummaryResponse,
+)
 from app.services.watchlist_service import WatchlistService
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
@@ -18,6 +24,11 @@ def create_watchlist_item(payload: WatchlistItemCreate) -> WatchlistItem:
         return service.create_item(payload)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/summary", response_model=WatchlistSummaryResponse)
+def watchlist_summary() -> WatchlistSummaryResponse:
+    return service.summary()
 
 
 @router.get("/{item_id}", response_model=WatchlistItem)
