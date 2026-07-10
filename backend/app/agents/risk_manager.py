@@ -13,7 +13,7 @@ class RiskManagerAgent(BaseAgent):
         proposed_decision: DecisionAction | None = None,
         proposed_stop_loss: float | None = None,
     ) -> RiskManagerOutput:
-        warnings: list[str] = ["No decision is guaranteed; AlphaCouncil is research support only."]
+        warnings: list[str] = ["No decision is guaranteed; Wisoka Compass is research support only."]
         latest_price = collected_data.get("latest_price")
         data_source_status = collected_data.get("data_source_status", {})
         default_quality = "MOCK" if data_source_status.get("is_mock") else "UNAVAILABLE"

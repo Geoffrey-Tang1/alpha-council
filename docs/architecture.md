@@ -1,14 +1,14 @@
-# AlphaCouncil Product Architecture
+# Wisoka Compass Product Architecture
 
 Status: MVP architecture proposal
-Project: AlphaCouncil
+Project: Wisoka Compass
 Repository: alpha-council
-Primary local path: `~/Projects/AlphaCouncil`
+Primary local path: `~/Projects/AlphaCouncil` (retained for local compatibility)
 MVP boundary: research, decision support, backtesting, and audit logging only. No live trading.
 
 ## 1. Product Vision
 
-AlphaCouncil is a professional multi-agent global equity research and decision-support web application. It behaves like a small investment committee: multiple specialized agents inspect market data, technicals, fundamentals, news, macro conditions, portfolio fit, and risk before producing an explainable decision.
+Wisoka Compass is a professional multi-agent global equity research and decision-support web application. It behaves like a small investment committee: multiple specialized agents inspect market data, technicals, fundamentals, news, macro conditions, portfolio fit, and risk before producing an explainable decision.
 
 The MVP should help a user make disciplined, auditable research decisions for US, Japanese, Taiwan, and Korean equities. It must not execute real trades. It must produce structured decisions only:
 
@@ -1249,7 +1249,7 @@ The project README should include:
 
 | Section | Required Content |
 | --- | --- |
-| Project overview | AlphaCouncil positioning and MVP no-live-trading boundary. |
+| Project overview | Wisoka Compass positioning and MVP no-live-trading boundary. |
 | macOS prerequisites | Python 3.11+, Node.js 20+, npm, Git. |
 | Backend setup | `python3 -m venv .venv`, `source .venv/bin/activate`, `pip install -r requirements.txt`. |
 | Frontend setup | `npm install`, `npm run dev`. |

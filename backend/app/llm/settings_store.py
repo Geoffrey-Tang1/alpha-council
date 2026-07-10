@@ -15,18 +15,44 @@ from app.llm.schemas import (
 
 
 MODEL_OPTIONS: dict[str, list[str]] = {
-    "disabled": ["none"],
+    "disabled": [],
     "mock": ["mock-llm-v1"],
-    "openai": ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"],
-    "anthropic": ["claude-3-5-haiku-latest", "claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest"],
-    "gemini": ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"],
+    "openai": [
+        "gpt-5.5",
+        "gpt-5.5-pro",
+        "gpt-5.4",
+        "gpt-5.4-pro",
+        "gpt-5.4-mini",
+        "gpt-5.4-nano",
+        "gpt-5",
+        "gpt-5-mini",
+        "gpt-5-nano",
+        "gpt-4.1",
+        "gpt-4.1-mini",
+        "gpt-4o",
+        "gpt-4o-mini",
+    ],
+    "anthropic": [
+        "claude-opus-4-1",
+        "claude-sonnet-4",
+        "claude-3-7-sonnet-latest",
+        "claude-3-5-sonnet-latest",
+        "claude-3-5-haiku-latest",
+    ],
+    "gemini": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
     "deepseek": ["deepseek-chat", "deepseek-reasoner"],
-    "xai": ["grok-2", "grok-2-mini"],
-    "mistral": ["mistral-small-latest", "mistral-large-latest"],
-    "groq": ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+    "xai": ["grok-4", "grok-3", "grok-3-mini", "grok-2", "grok-2-mini"],
+    "mistral": ["mistral-large-latest", "mistral-small-latest", "magistral-medium-latest", "magistral-small-latest"],
+    "groq": [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "moonshotai/kimi-k2-instruct",
+        "qwen/qwen3-32b",
+        "deepseek-r1-distill-llama-70b",
+    ],
     "openrouter": ["openrouter/auto"],
-    "ollama": ["llama3.1", "qwen2.5", "mistral"],
-    "custom_openai_compatible": ["custom-model"],
+    "ollama": ["llama3.1", "llama3.2", "qwen2.5", "qwen3", "mistral", "deepseek-r1"],
+    "custom_openai_compatible": [],
 }
 
 PROVIDERS_REQUIRING_KEYS = {
@@ -42,6 +68,12 @@ PROVIDERS_REQUIRING_KEYS = {
 }
 
 DEFAULT_BASE_URLS = {
+    "openai": "https://api.openai.com/v1",
+    "openrouter": "https://openrouter.ai/api/v1",
+    "deepseek": "https://api.deepseek.com/v1",
+    "xai": "https://api.x.ai/v1",
+    "mistral": "https://api.mistral.ai/v1",
+    "groq": "https://api.groq.com/openai/v1",
     "ollama": "http://localhost:11434",
 }
 
@@ -85,7 +117,10 @@ def available_models_for(provider: str) -> list[str]:
 
 
 def default_model_for(provider: str) -> str:
-    return available_models_for(provider)[0]
+    models = available_models_for(provider)
+    if models:
+        return models[0]
+    return "none" if provider == "disabled" else "custom-model"
 
 
 def mask_api_key(api_key: str | None) -> str | None:

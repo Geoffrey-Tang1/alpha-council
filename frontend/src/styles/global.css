@@ -181,7 +181,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color-scheme: var(--color-scheme);
 }
@@ -409,7 +410,8 @@ select {
 
 .button:disabled,
 input:disabled,
-select:disabled {
+select:disabled,
+textarea:disabled {
   cursor: not-allowed;
   background: var(--color-disabled-bg);
   color: var(--color-disabled-text);
@@ -418,7 +420,8 @@ select:disabled {
 
 .button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
@@ -581,7 +584,8 @@ select:focus-visible {
 }
 
 .analysis-form-grid input,
-.analysis-form-grid select {
+.analysis-form-grid select,
+.analysis-form-grid textarea {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -590,6 +594,10 @@ select:focus-visible {
 .analysis-form-grid .strategy-field {
   grid-column: span 2;
   min-width: 0;
+}
+
+.analysis-textarea-field {
+  grid-column: span 2;
 }
 
 .analysis-form-actions {
@@ -655,7 +663,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   min-height: 40px;
   border-radius: 8px;
   border: 1px solid var(--color-input-border);
@@ -664,7 +673,13 @@ select {
   color: var(--text);
 }
 
-input::placeholder {
+textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
   color: var(--color-input-placeholder);
 }
 
@@ -850,6 +865,161 @@ input::placeholder {
   padding-top: 12px;
 }
 
+.research-report {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.research-report-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.research-report-header h3 {
+  margin-bottom: 8px;
+}
+
+.research-badge-stack,
+.evidence-badges,
+.evidence-chip-row,
+.research-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.research-section {
+  min-width: 0;
+}
+
+.research-section p {
+  line-height: 1.65;
+}
+
+.research-grid,
+.research-module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.research-metric {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.research-metric span,
+.evidence-item small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.research-metric strong {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.research-callout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.research-callout div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.research-callout span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.research-list-block h4,
+.evidence-reference-list h4 {
+  margin-bottom: 4px;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.evidence-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--color-surface-secondary);
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.evidence-item-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.evidence-item p {
+  margin: 0;
+}
+
+.evidence-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--color-neutral-soft);
+  color: var(--text);
+  display: inline-flex;
+  max-width: 100%;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.research-details {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.research-details summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.research-loading-card {
+  display: grid;
+  gap: 12px;
+}
+
+.research-stage-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 18px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
 .subtle-list {
   border-top: 1px solid var(--line);
   margin-top: 14px;
@@ -983,6 +1153,10 @@ table {
 
 .agent-votes-table {
   min-width: 520px;
+}
+
+.research-risk-table {
+  min-width: 980px;
 }
 
 .data-table th,
@@ -1196,6 +1370,10 @@ th {
     grid-column: span 1;
   }
 
+  .analysis-textarea-field {
+    grid-column: span 2;
+  }
+
   .analysis-form-actions {
     min-width: 0;
   }
@@ -1257,6 +1435,10 @@ th {
   }
 
   .analysis-form-grid .strategy-field {
+    grid-column: auto;
+  }
+
+  .analysis-textarea-field {
     grid-column: auto;
   }
 

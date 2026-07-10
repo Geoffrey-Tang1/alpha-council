@@ -137,6 +137,7 @@ class DecisionRepository:
         payload.setdefault("llm_used", False)
         payload.setdefault("llm_warnings", [])
         payload.setdefault("llm_outputs", {})
+        payload.setdefault("research_report", None)
 
         return payload
 

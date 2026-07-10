@@ -9,7 +9,7 @@ from app.db.database import initialize_database
 def create_app() -> FastAPI:
     initialize_database()
     app = FastAPI(
-        title="AlphaCouncil API",
+        title="Wisoka Compass API",
         version=settings.version,
         description="Research-only multi-agent equity decision support API. No live trading.",
     )

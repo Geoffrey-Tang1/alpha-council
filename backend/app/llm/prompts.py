@@ -9,7 +9,7 @@ class PromptSpec:
 
 
 SAFETY_INSTRUCTIONS = (
-    "Summarize deterministic AlphaCouncil evidence only. Do not provide chain-of-thought. "
+    "Summarize deterministic Wisoka Compass evidence only. Do not provide chain-of-thought. "
     "Do not create executable orders. Do not claim guaranteed returns. Respect all Risk Manager vetoes."
 )
 

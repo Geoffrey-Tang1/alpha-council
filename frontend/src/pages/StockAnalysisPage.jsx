@@ -6,6 +6,7 @@ import AgentOpinionCard from "../components/analysis/AgentOpinionCard.jsx";
 import DecisionCard from "../components/analysis/DecisionCard.jsx";
 import LLMResearchMemo from "../components/analysis/LLMResearchMemo.jsx";
 import RiskPanel from "../components/analysis/RiskPanel.jsx";
+import StructuredResearchReport from "../components/analysis/StructuredResearchReport.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
 import { formatConfidence } from "../utils/formatting.js";
@@ -15,11 +16,14 @@ const initialForm = {
   ticker: "NVDA",
   market: "US",
   time_horizon: "swing",
-  strategy_preference: "moving_average_crossover"
+  strategy_preference: "moving_average_crossover",
+  research_objective: "investment_thesis",
+  user_thesis: "",
+  user_concerns: ""
 };
 
 export default function StockAnalysisPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [form, setForm] = useState(initialForm);
   const [decision, setDecision] = useState(null);
   const [error, setError] = useState("");
@@ -35,7 +39,16 @@ export default function StockAnalysisPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await runAnalysis(form);
+      const payload = {
+        ...form,
+        user_concerns: form.user_concerns
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        requested_at: new Date().toISOString(),
+        locale: i18n.resolvedLanguage || i18n.language || "en"
+      };
+      const result = await runAnalysis(payload);
       setDecision(result);
     } catch (err) {
       setError(err.message);
@@ -86,6 +99,32 @@ export default function StockAnalysisPage() {
               <option value="breakout_n_day_high">{strategyLabel(t, "breakout_n_day_high")}</option>
             </select>
           </label>
+          <label className="form-field">
+            {t("research.researchObjective")}
+            <select name="research_objective" value={form.research_objective} onChange={updateField}>
+              <option value="investment_thesis">{t("research.objectives.investmentThesis")}</option>
+              <option value="risk_review_focus">{t("research.objectives.riskReviewFocus")}</option>
+              <option value="monitoring_review">{t("research.objectives.monitoringReview")}</option>
+            </select>
+          </label>
+          <label className="form-field analysis-textarea-field">
+            {t("research.optionalUserThesis")}
+            <textarea
+              name="user_thesis"
+              value={form.user_thesis}
+              onChange={updateField}
+              placeholder={t("research.userThesisPlaceholder")}
+            />
+          </label>
+          <label className="form-field analysis-textarea-field">
+            {t("research.optionalUserConcerns")}
+            <textarea
+              name="user_concerns"
+              value={form.user_concerns}
+              onChange={updateField}
+              placeholder={t("research.userConcernsPlaceholder")}
+            />
+          </label>
           <div className="form-actions analysis-form-actions">
             <Button type="submit" disabled={loading}>{loading ? t("analysis.running") : t("analysis.run")}</Button>
           </div>
@@ -93,6 +132,25 @@ export default function StockAnalysisPage() {
       </Card>
 
       {error && <Card className="error-card">{error}</Card>}
+
+      {loading && (
+        <Card className="research-loading-card">
+          <h3>{t("research.pipelineRunning")}</h3>
+          <ol className="research-stage-preview">
+            {[
+              "requestValidation",
+              "researchPlan",
+              "evidenceCollection",
+              "specialistAnalysis",
+              "riskReview",
+              "committeeDecision",
+              "persistence"
+            ].map((stage) => (
+              <li key={stage}>{t(`research.stages.${stage}`)}</li>
+            ))}
+          </ol>
+        </Card>
+      )}
 
       {decision && (
         <div className="analysis-results">
@@ -116,6 +174,7 @@ export default function StockAnalysisPage() {
             )}
           </Card>
           <DecisionCard decision={decision} />
+          <StructuredResearchReport report={decision.research_report} />
           <LLMResearchMemo decision={decision} />
           <div className="agent-grid">
             <SpecialistAgentCard

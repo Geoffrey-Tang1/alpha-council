@@ -19,7 +19,7 @@ class MockLLMProvider(BaseLLMProvider):
         bull = "; ".join(context.bull_points[:2]) or "No strong bull evidence."
         bear = "; ".join(context.bear_points[:2]) or "No strong bear evidence."
         summary = (
-            f"This mock LLM bull/bear summary uses deterministic AlphaCouncil evidence for "
+            f"This mock LLM bull/bear summary uses deterministic Wisoka Compass evidence for "
             f"{self._instrument(context)}. Bull case: {bull} Bear case: {bear}"
             f"{self._data_limitation(context)}"
         )
@@ -32,7 +32,7 @@ class MockLLMProvider(BaseLLMProvider):
             else " Risk controls did not add a veto."
         )
         summary = (
-            f"This mock LLM memo summarizes the deterministic AlphaCouncil decision for "
+            f"This mock LLM memo summarizes the deterministic Wisoka Compass decision for "
             f"{self._instrument(context)}: {context.decision} with {context.confidence:.0%} confidence. "
             f"{context.final_explanation}{veto_note} It is research support only and not a guarantee."
             f"{self._data_limitation(context)}"
@@ -69,7 +69,7 @@ class MockLLMProvider(BaseLLMProvider):
             used=True,
             summary=summary,
             reasoning_notes=[
-                "Generated from deterministic AlphaCouncil outputs only.",
+                "Generated from deterministic Wisoka Compass outputs only.",
                 "No chain-of-thought, executable orders, or guaranteed-return claims are produced.",
             ],
             warnings=list(self.warnings),

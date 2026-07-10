@@ -1,1 +1,1 @@
-"""AlphaCouncil FastAPI application package."""
+"""Wisoka Compass FastAPI application package."""

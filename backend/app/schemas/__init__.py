@@ -1,1 +1,1 @@
-"""Pydantic schemas for AlphaCouncil."""
+"""Pydantic schemas for Wisoka Compass."""

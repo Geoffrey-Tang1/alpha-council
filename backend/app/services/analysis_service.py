@@ -14,6 +14,7 @@ from app.schemas.analysis import AnalysisRequest
 from app.schemas.decisions import DecisionResponse
 from app.services.decision_service import DecisionService
 from app.services.llm_reasoning_service import LLMReasoningService
+from app.services.research_pipeline_service import ResearchPipelineService
 
 
 class AnalysisService:
@@ -30,6 +31,7 @@ class AnalysisService:
         self.portfolio_manager = PortfolioManagerAgent()
         self.decision_committee = DecisionCommitteeAgent()
         self.decision_service = decision_service or DecisionService()
+        self.research_pipeline = ResearchPipelineService()
 
     def run_analysis(self, request: AnalysisRequest) -> DecisionResponse:
         collected = self.data_collector.collect(ticker=request.ticker, market=request.market)
@@ -62,4 +64,17 @@ class AnalysisService:
             portfolio=portfolio,
         )
         decision = LLMReasoningService().enrich_decision(decision)
+        decision.research_report = self.research_pipeline.build_report(
+            request=request,
+            collected_data=collected,
+            technical=technical,
+            fundamental=fundamental,
+            news=news,
+            macro=macro,
+            bull_case=bull_case,
+            bear_case=bear_case,
+            risk=risk,
+            portfolio=portfolio,
+            decision=decision,
+        )
         return self.decision_service.save_decision(decision)

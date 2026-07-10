@@ -4,6 +4,7 @@ from app.core.constants import DecisionAction, MarketCode, MarketStatus
 from app.llm.schemas import LLMDecisionOutputs
 from app.schemas.agents import AgentOutputs, AgentVoteOutput, BearCaseOutput, BullCaseOutput
 from app.schemas.common import DataSource
+from app.schemas.research import StructuredResearchReport
 
 
 class DecisionResponse(BaseModel):
@@ -40,6 +41,7 @@ class DecisionResponse(BaseModel):
     llm_used: bool = False
     llm_warnings: list[str] = Field(default_factory=list)
     llm_outputs: LLMDecisionOutputs = Field(default_factory=LLMDecisionOutputs)
+    research_report: StructuredResearchReport | None = None
     timestamp: str
     saved: bool
 

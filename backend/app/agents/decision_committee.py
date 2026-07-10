@@ -219,4 +219,4 @@ class DecisionCommitteeAgent(BaseAgent):
             return "Market data provided by yfinance. Data may be delayed, incomplete, or adjusted. Not financial advice."
         if data_quality == "DEGRADED":
             return "Market data provider degraded. Some data may be incomplete or fallback mock data. Not financial advice."
-        return "Market data unavailable. AlphaCouncil cannot validate this decision. Not financial advice."
+        return "Market data unavailable. Wisoka Compass cannot validate this decision. Not financial advice."

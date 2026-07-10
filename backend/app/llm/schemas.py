@@ -120,3 +120,25 @@ class LLMConnectionTestResponse(BaseModel):
     model: str
     message: str
     latency_ms: int
+
+
+class LLMModelInfo(BaseModel):
+    id: str
+    name: str
+    source: str
+    created: int | str | None = None
+    metadata: dict = Field(default_factory=dict)
+
+
+class LLMModelCatalogResponse(BaseModel):
+    provider: LLMProviderName
+    models: list[LLMModelInfo]
+    source: str
+    fetched_at: str | None = None
+    status: str
+    message: str
+    supports_refresh: bool
+
+
+class LLMModelRefreshRequest(BaseModel):
+    provider: LLMProviderName

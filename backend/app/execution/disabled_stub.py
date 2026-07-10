@@ -6,4 +6,4 @@ class DisabledExecutionProvider:
     """
 
     def place_order(self, *args, **kwargs):
-        raise NotImplementedError("Live trading is not implemented in the AlphaCouncil MVP.")
+        raise NotImplementedError("Live trading is not implemented in the Wisoka Compass MVP.")

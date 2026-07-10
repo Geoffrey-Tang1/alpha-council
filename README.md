@@ -1,6 +1,6 @@
-# AlphaCouncil
+# Wisoka Compass
 
-AlphaCouncil is a multi-agent global equity trading decision platform for research, signal review, risk control, historical backtesting, and decision logging.
+Wisoka Compass is a multi-agent global equity trading decision platform for research, signal review, risk control, historical backtesting, and decision logging.
 
 This MVP includes a FastAPI backend, React + Vite frontend, SQLite-backed decision history, deterministic mock data, market status logic, and an optional yfinance market-data provider.
 
@@ -8,12 +8,12 @@ This MVP includes a FastAPI backend, React + Vite frontend, SQLite-backed decisi
 
 ## MVP Boundary
 
-AlphaCouncil is research support only.
+Wisoka Compass is research support only.
 
 - No live trading.
 - No broker integration.
 - No paper trading.
-- No real API keys.
+- No hardcoded or committed real API keys.
 - No paid market data requirement.
 - No recommendation is guaranteed.
 
@@ -45,6 +45,8 @@ Install these before running the app:
 - Git
 
 ## Backend Setup
+
+The public product name is Wisoka Compass. The existing local development path remains `~/Projects/AlphaCouncil` for compatibility with current clones, SQLite files, and local settings.
 
 ```bash
 cd ~/Projects/AlphaCouncil/backend
@@ -139,6 +141,12 @@ kill -9 <PID>
 | GET | `/api/v1/evaluations` | List saved decision evaluations with filters. |
 | GET | `/api/v1/evaluations/summary` | Aggregate decision evaluation analytics. |
 | GET | `/api/v1/evaluations/{evaluation_id}` | Inspect one saved evaluation payload. |
+| GET | `/api/v1/llm/status` | Current LLM reasoning status. |
+| GET | `/api/v1/llm/settings` | Read local LLM settings without exposing API keys. |
+| PATCH | `/api/v1/llm/settings` | Update local LLM provider settings. |
+| POST | `/api/v1/llm/test` | Test the configured LLM provider safely. |
+| GET | `/api/v1/llm/models` | Read cached or static model catalog for a provider. |
+| POST | `/api/v1/llm/models/refresh` | Refresh provider model catalog when supported. |
 
 Example analysis request:
 
@@ -222,4 +230,4 @@ Do not commit `.env`.
 
 ## Risk Disclaimer
 
-AlphaCouncil may use deterministic mock data or yfinance market data depending on `DATA_PROVIDER`. yfinance data may be delayed, incomplete, adjusted, or unavailable and is not suitable for guaranteed trading decisions. AlphaCouncil is not financial advice, does not guarantee outcomes, and does not execute trades. Always verify market data, liquidity, risk, and suitability independently before making investment decisions.
+Wisoka Compass may use deterministic mock data or yfinance market data depending on `DATA_PROVIDER`. yfinance data may be delayed, incomplete, adjusted, or unavailable and is not suitable for guaranteed trading decisions. Wisoka Compass is not financial advice, does not guarantee outcomes, and does not execute trades. Always verify market data, liquidity, risk, and suitability independently before making investment decisions.

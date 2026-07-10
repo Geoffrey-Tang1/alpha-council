@@ -6,6 +6,7 @@ import AgentOpinionCard from "../components/analysis/AgentOpinionCard.jsx";
 import DecisionCard from "../components/analysis/DecisionCard.jsx";
 import LLMResearchMemo from "../components/analysis/LLMResearchMemo.jsx";
 import RiskPanel from "../components/analysis/RiskPanel.jsx";
+import StructuredResearchReport from "../components/analysis/StructuredResearchReport.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
 import { formatConfidence, formatDateTime, formatInstrument } from "../utils/formatting.js";
@@ -55,6 +56,7 @@ export default function DecisionDetailPage({ decisionId, onBack }) {
       {decision && (
         <>
           <DecisionCard decision={decision} />
+          <StructuredResearchReport report={decision.research_report} />
           <LLMResearchMemo decision={decision} />
           <div className="data-quality-card">
             <Card>

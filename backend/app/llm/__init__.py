@@ -1,1 +1,1 @@
-"""Optional LLM-assisted reasoning providers for AlphaCouncil."""
+"""Optional LLM-assisted reasoning providers for Wisoka Compass."""
