@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { getLlmSettings, testLlmConnection, updateLlmSettings } from "../api/client.js";
+import {
+  getLlmModels,
+  getLlmSettings,
+  refreshLlmModels,
+  testLlmConnection,
+  updateLlmSettings
+} from "../api/client.js";
 import Badge from "../components/ui/Badge.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
+import { APPEARANCE_OPTIONS } from "../theme/appearance.js";
+import { useTheme } from "../theme/ThemeProvider.jsx";
 
 const PROVIDERS = [
   "disabled",
@@ -21,21 +29,6 @@ const PROVIDERS = [
   "custom_openai_compatible"
 ];
 
-const MODEL_OPTIONS = {
-  disabled: ["none"],
-  mock: ["mock-llm-v1"],
-  openai: ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o"],
-  anthropic: ["claude-3-5-haiku-latest", "claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest"],
-  gemini: ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"],
-  deepseek: ["deepseek-chat", "deepseek-reasoner"],
-  xai: ["grok-2", "grok-2-mini"],
-  mistral: ["mistral-small-latest", "mistral-large-latest"],
-  groq: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
-  openrouter: ["openrouter/auto"],
-  ollama: ["llama3.1", "qwen2.5", "mistral"],
-  custom_openai_compatible: ["custom-model"]
-};
-
 const BASE_URL_PROVIDERS = new Set([
   "openrouter",
   "ollama",
@@ -45,8 +38,17 @@ const BASE_URL_PROVIDERS = new Set([
   "mistral"
 ]);
 
-const CUSTOM_MODEL_PROVIDERS = new Set(["openrouter", "ollama", "custom_openai_compatible"]);
 const API_KEY_HIDDEN_PROVIDERS = new Set(["disabled", "mock", "ollama"]);
+const CUSTOM_MODEL_VALUE = "__custom";
+
+const DEFAULT_BASE_URLS = {
+  openrouter: "https://openrouter.ai/api/v1",
+  ollama: "http://localhost:11434",
+  custom_openai_compatible: "",
+  deepseek: "https://api.deepseek.com/v1",
+  groq: "https://api.groq.com/openai/v1",
+  mistral: "https://api.mistral.ai/v1"
+};
 
 const initialForm = {
   llm_provider: "disabled",
@@ -65,29 +67,41 @@ function providerLabel(t, provider) {
 function statusTone(status) {
   if (status === "success") return "success";
   if (status === "failed") return "danger";
+  if (status === "missing_api_key" || status === "error" || status === "unavailable") return "warning";
   return "neutral";
+}
+
+function defaultModelFor(provider, models) {
+  if (provider === "disabled") {
+    return "none";
+  }
+  return models[0]?.id || "custom-model";
 }
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const { appearancePreference, resolvedTheme, systemPrefersDark, setAppearancePreference } = useTheme();
   const [settings, setSettings] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [apiKeyDraft, setApiKeyDraft] = useState("");
   const [apiKeyChanged, setApiKeyChanged] = useState(false);
+  const [customModel, setCustomModel] = useState("");
+  const [modelCatalog, setModelCatalog] = useState(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsRefreshing, setModelsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const modelOptions = useMemo(
-    () => MODEL_OPTIONS[form.llm_provider] || ["custom-model"],
-    [form.llm_provider]
-  );
+  const modelOptions = useMemo(() => modelCatalog?.models || [], [modelCatalog]);
+  const modelIds = useMemo(() => modelOptions.map((model) => model.id), [modelOptions]);
   const showApiKey = !API_KEY_HIDDEN_PROVIDERS.has(form.llm_provider);
   const showBaseUrl = BASE_URL_PROVIDERS.has(form.llm_provider);
-  const showCustomModel = CUSTOM_MODEL_PROVIDERS.has(form.llm_provider);
   const providerIsDisabled = form.llm_provider === "disabled";
+  const modelSelectValue = providerIsDisabled ? "none" : modelIds.includes(form.selected_model) ? form.selected_model : CUSTOM_MODEL_VALUE;
+  const showCustomModel = !providerIsDisabled && modelSelectValue === CUSTOM_MODEL_VALUE;
 
   useEffect(() => {
     loadSettings();
@@ -99,6 +113,7 @@ export default function SettingsPage() {
     try {
       const response = await getLlmSettings();
       applySettings(response);
+      await loadModelCatalog(response.llm_provider, response.selected_model, false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -121,6 +136,34 @@ export default function SettingsPage() {
     setApiKeyChanged(false);
   }
 
+  async function loadModelCatalog(provider, preferredModel = null, updateSelectedModel = true) {
+    setModelsLoading(true);
+    try {
+      const catalog = await getLlmModels(provider);
+      applyModelCatalog(catalog, preferredModel, updateSelectedModel);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setModelsLoading(false);
+    }
+  }
+
+  function applyModelCatalog(catalog, preferredModel = null, updateSelectedModel = true) {
+    setModelCatalog(catalog);
+    const ids = (catalog.models || []).map((model) => model.id);
+    const nextModel = preferredModel || defaultModelFor(catalog.provider, catalog.models || []);
+    const resolvedModel = catalog.provider === "disabled" ? "none" : nextModel;
+    const nextCustomModel = resolvedModel !== "none" && !ids.includes(resolvedModel) ? resolvedModel : "";
+    setCustomModel(nextCustomModel);
+
+    if (updateSelectedModel) {
+      setForm((current) => ({
+        ...current,
+        selected_model: resolvedModel
+      }));
+    }
+  }
+
   function updateField(event) {
     const { name, value, checked, type } = event.target;
     setForm((current) => {
@@ -135,9 +178,12 @@ export default function SettingsPage() {
       ...current,
       llm_provider: provider,
       enable_llm_reasoning: provider === "disabled" ? false : current.enable_llm_reasoning,
-      selected_model: MODEL_OPTIONS[provider]?.[0] || "custom-model",
-      base_url: provider === "ollama" ? "http://localhost:11434" : current.base_url
+      selected_model: provider === "disabled" ? "none" : "custom-model",
+      base_url: DEFAULT_BASE_URLS[provider] ?? current.base_url
     }));
+    setCustomModel("");
+    setModelCatalog(null);
+    loadModelCatalog(provider, null, true);
   }
 
   function updateReasoningToggle(event) {
@@ -152,9 +198,39 @@ export default function SettingsPage() {
     setApiKeyChanged(true);
   }
 
+  function updateModelSelection(event) {
+    const value = event.target.value;
+    if (value === CUSTOM_MODEL_VALUE) {
+      const existingCustomModel =
+        form.selected_model !== "none" && !modelIds.includes(form.selected_model) ? form.selected_model : "";
+      const nextCustomModel = customModel || existingCustomModel || "custom-model";
+      setCustomModel(nextCustomModel);
+      setForm((current) => ({
+        ...current,
+        selected_model: nextCustomModel
+      }));
+      return;
+    }
+    setCustomModel("");
+    setForm((current) => ({
+      ...current,
+      selected_model: value
+    }));
+  }
+
+  function updateCustomModel(event) {
+    const value = event.target.value;
+    setCustomModel(value);
+    setForm((current) => ({
+      ...current,
+      selected_model: value
+    }));
+  }
+
   function buildPayload(includeApiKey) {
     const payload = {
       ...form,
+      selected_model: form.llm_provider === "disabled" ? "none" : form.selected_model || "custom-model",
       base_url: form.base_url || null,
       temperature: Number(form.temperature),
       max_tokens: Number(form.max_tokens),
@@ -202,6 +278,21 @@ export default function SettingsPage() {
     }
   }
 
+  async function refreshModels() {
+    setModelsRefreshing(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await refreshLlmModels(form.llm_provider);
+      applyModelCatalog(response, form.selected_model, false);
+      setMessage(response.message);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setModelsRefreshing(false);
+    }
+  }
+
   async function resetDisabled() {
     setSaving(true);
     setError("");
@@ -239,6 +330,47 @@ export default function SettingsPage() {
       {error && <Card className="error-card">{error}</Card>}
       {message && <Card className="success-card">{message}</Card>}
 
+      <Card className="appearance-card">
+        <div className="card-row">
+          <div>
+            <h3>{t("appearance.title")}</h3>
+            <p className="muted">
+              {t("appearance.subtitle")}{" "}
+              <strong>
+                {resolvedTheme === "dark" ? t("appearance.currentlyDark") : t("appearance.currentlyLight")}
+              </strong>
+            </p>
+          </div>
+          <Badge tone="neutral">{resolvedTheme === "dark" ? t("appearance.dark") : t("appearance.light")}</Badge>
+        </div>
+        <div className="appearance-options" role="radiogroup" aria-label={t("appearance.title")}>
+          {APPEARANCE_OPTIONS.map((option) => {
+            const label = t(`appearance.${option}`);
+            const description =
+              option === "system"
+                ? t("appearance.followSystem", {
+                    current: systemPrefersDark ? t("appearance.currentlyDark") : t("appearance.currentlyLight")
+                  })
+                : t(`appearance.${option}Description`);
+            return (
+              <label key={option} className={`appearance-option ${appearancePreference === option ? "is-selected" : ""}`}>
+                <input
+                  type="radio"
+                  name="appearance"
+                  value={option}
+                  checked={appearancePreference === option}
+                  onChange={() => setAppearancePreference(option)}
+                />
+                <span>
+                  <strong>{label}</strong>
+                  <small>{description}</small>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </Card>
+
       <div className="settings-grid">
         <Card>
           <h3>{t("settings.llmConfiguration")}</h3>
@@ -270,35 +402,38 @@ export default function SettingsPage() {
               <label>
                 {t("settings.model")}
                 <select
-                  value={modelOptions.includes(form.selected_model) ? form.selected_model : "__custom"}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setForm((current) => ({
-                      ...current,
-                      selected_model: value === "__custom" ? current.selected_model : value
-                    }));
-                  }}
+                  name="selected_model_choice"
+                  value={modelSelectValue}
+                  onChange={updateModelSelection}
+                  disabled={providerIsDisabled || modelsLoading}
                 >
+                  {providerIsDisabled && <option value="none">none</option>}
                   {modelOptions.map((model) => (
-                    <option key={model} value={model}>
-                      {model}
+                    <option key={model.id} value={model.id}>
+                      {model.name || model.id}
                     </option>
                   ))}
-                  {showCustomModel && <option value="__custom">{t("settings.customModel")}</option>}
+                  {!providerIsDisabled && <option value={CUSTOM_MODEL_VALUE}>{t("settings.customModelOption")}</option>}
                 </select>
               </label>
 
               {showCustomModel && (
                 <label>
-                  {t("settings.customModel")}
+                  {t("settings.customModelId")}
                   <input
                     name="selected_model"
-                    value={form.selected_model}
-                    onChange={updateField}
+                    value={customModel}
+                    onChange={updateCustomModel}
                     placeholder={t("settings.customModelPlaceholder")}
                   />
                 </label>
               )}
+
+              <div className="form-actions model-refresh-actions">
+                <Button type="button" onClick={refreshModels} disabled={modelsRefreshing || modelsLoading || providerIsDisabled}>
+                  {modelsRefreshing ? t("settings.refreshingModels") : t("settings.refreshModels")}
+                </Button>
+              </div>
 
               {showBaseUrl && (
                 <label>
@@ -350,7 +485,20 @@ export default function SettingsPage() {
               </label>
             </div>
 
+            <div className="model-catalog-status">
+              <div className="card-row">
+                <strong>{t("settings.modelCatalog")}</strong>
+                <Badge tone={statusTone(modelCatalog?.status)}>{modelCatalog?.status || (modelsLoading ? "loading" : "unknown")}</Badge>
+              </div>
+              <p>
+                {t("settings.modelSource")}: {modelCatalog?.source || "unknown"}
+                {modelCatalog?.fetched_at ? ` · ${t("settings.fetchedAt")}: ${modelCatalog.fetched_at}` : ""}
+              </p>
+              <p>{modelsLoading ? t("common.loading") : modelCatalog?.message || t("settings.modelCatalogHelp")}</p>
+            </div>
+
             <p className="muted">{t("settings.keyStorageHelp")}</p>
+            <p className="muted">{t("settings.modelCatalogHelp")}</p>
             <p className="data-disclaimer">{t("settings.noCommitWarning")}</p>
 
             <div className="form-button-row">

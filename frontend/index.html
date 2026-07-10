@@ -1,9 +1,64 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AlphaCouncil</title>
+    <meta name="theme-color" content="#07111F" />
+    <meta
+      name="description"
+      content="Wisoka Compass is a research-only multi-agent equity decision platform for explainable analysis, risk review, backtesting, and decision logging."
+    />
+    <style>
+      html[data-theme="dark"] {
+        background: #07111F;
+        color-scheme: dark;
+      }
+
+      html[data-theme="light"] {
+        background: #F4F8FC;
+        color-scheme: light;
+      }
+
+      body {
+        background: inherit;
+      }
+    </style>
+    <script>
+      (function () {
+        var storageKey = "wisoka.appearance";
+        var defaultPreference = "dark";
+        var allowed = { dark: true, light: true, system: true };
+        var preference = defaultPreference;
+
+        try {
+          var stored = window.localStorage.getItem(storageKey);
+          if (allowed[stored]) {
+            preference = stored;
+          }
+        } catch (error) {
+          preference = defaultPreference;
+        }
+
+        var systemPrefersDark = true;
+        try {
+          systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        } catch (error) {
+          systemPrefersDark = true;
+        }
+
+        var resolvedTheme = preference === "system" ? (systemPrefersDark ? "dark" : "light") : preference;
+        var themeColor = resolvedTheme === "light" ? "#F4F8FC" : "#07111F";
+        document.documentElement.dataset.theme = resolvedTheme;
+        document.documentElement.style.colorScheme = resolvedTheme;
+        document.documentElement.style.backgroundColor = themeColor;
+
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta) {
+          themeMeta.setAttribute("content", themeColor);
+        }
+      })();
+    </script>
+    <title>Wisoka Compass</title>
   </head>
   <body>
     <div id="root"></div>

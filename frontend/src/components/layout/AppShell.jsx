@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { getDataSourceStatus } from "../../api/client.js";
 import Button from "../ui/Button.jsx";
+import BrandLockup from "./BrandLockup.jsx";
 import LanguageSwitcher from "./LanguageSwitcher.jsx";
 
 export default function AppShell({ currentPage, onNavigate, children }) {
@@ -41,7 +42,7 @@ export default function AppShell({ currentPage, onNavigate, children }) {
       <aside className="sidebar">
         <div>
           <p className="eyebrow">{t("sidebar.researchDesk")}</p>
-          <h1>{t("app.name")}</h1>
+          <BrandLockup />
         </div>
         <LanguageSwitcher />
         <nav className="nav-list" aria-label={t("sidebar.navigation")}>

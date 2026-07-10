@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "AlphaCouncil"
+    "name": "Wisoka Compass",
+    "shortName": "Wisoka"
   },
   "language": {
     "label": "Language",
@@ -8,6 +9,18 @@
     "traditionalChinese": "Traditional Chinese",
     "japanese": "Japanese",
     "korean": "Korean"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "subtitle": "Choose how Wisoka Compass should look.",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "lightDescription": "Bright blue workspace for daylight use.",
+    "darkDescription": "Default blue research desk.",
+    "followSystem": "Follow system preference. {{current}}",
+    "currentlyLight": "Currently Light",
+    "currentlyDark": "Currently Dark"
   },
   "sidebar": {
     "researchDesk": "Research desk",
@@ -150,7 +163,7 @@
   "analysis": {
     "eyebrow": "Committee workflow",
     "title": "Stock Analysis",
-    "subtitle": "Run the AlphaCouncil agent committee with the selected backend data provider and save the decision.",
+    "subtitle": "Run the Wisoka Compass agent committee with the selected backend data provider and save the decision.",
     "timeHorizon": "Time horizon",
     "strategyPreference": "Strategy preference",
     "run": "Run Analysis",
@@ -190,7 +203,7 @@
   "watchlist": {
     "eyebrow": "Research queue",
     "title": "Watchlist",
-    "subtitle": "Track tickers for future AlphaCouncil review. Signals remain mock-data based in this MVP.",
+    "subtitle": "Track tickers for future Wisoka Compass review. Signals remain mock-data based in this MVP.",
     "notesPlaceholder": "Reason to monitor",
     "adding": "Adding...",
     "addTicker": "Add Ticker",
@@ -201,7 +214,7 @@
   "backtest": {
     "eyebrow": "Historical simulation",
     "title": "Backtest",
-    "subtitle": "Run single-ticker, long-only strategy simulations using the selected AlphaCouncil data provider. Results are research artifacts, not performance promises.",
+    "subtitle": "Run single-ticker, long-only strategy simulations using the selected Wisoka Compass data provider. Results are research artifacts, not performance promises.",
     "helper": "Run a historical simulation using the selected strategy and data provider.",
     "examples": "Examples: US: NVDA · JP: 7203 · TW: 2330 · KR: 005930",
     "startDate": "Start date",
@@ -276,7 +289,15 @@
     "provider": "Provider",
     "model": "Model",
     "customModel": "Custom model",
+    "customModelOption": "Custom model...",
+    "customModelId": "Custom model ID",
     "customModelPlaceholder": "Enter model name",
+    "modelCatalog": "Model catalog",
+    "modelCatalogHelp": "Model lists are loaded from your provider when possible and cached locally. You can always enter a custom model ID.",
+    "modelSource": "Source",
+    "fetchedAt": "Fetched at",
+    "refreshModels": "Refresh models",
+    "refreshingModels": "Refreshing...",
     "apiKey": "API Key",
     "baseUrl": "Base URL",
     "temperature": "Temperature",
@@ -317,7 +338,7 @@
   "evaluation": {
     "eyebrow": "Research analytics",
     "title": "Decision Evaluation",
-    "subtitle": "Review what happened after saved AlphaCouncil decisions using historical provider rows. This is observational research, not a claim of future profitability.",
+    "subtitle": "Review what happened after saved Wisoka Compass decisions using historical provider rows. This is observational research, not a claim of future profitability.",
     "evaluateAll": "Evaluate All Eligible",
     "evaluating": "Evaluating...",
     "disclaimer": "Decision evaluation is historical and observational only. It does not prove future profitability.",

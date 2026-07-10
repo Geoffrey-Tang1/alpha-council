@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "AlphaCouncil"
+    "name": "Wisoka Compass",
+    "shortName": "Wisoka"
   },
   "language": {
     "label": "語言",
@@ -8,6 +9,18 @@
     "traditionalChinese": "繁體中文",
     "japanese": "日本語",
     "korean": "한국어"
+  },
+  "appearance": {
+    "title": "外觀",
+    "subtitle": "選擇 Wisoka Compass 的顯示外觀。",
+    "light": "淺色",
+    "dark": "深色",
+    "system": "系統",
+    "lightDescription": "適合日間使用的明亮藍色工作區。",
+    "darkDescription": "預設的藍色研究桌面。",
+    "followSystem": "跟隨系統偏好。{{current}}",
+    "currentlyLight": "目前為淺色",
+    "currentlyDark": "目前為深色"
   },
   "sidebar": {
     "researchDesk": "研究台",
@@ -150,7 +163,7 @@
   "analysis": {
     "eyebrow": "委員會流程",
     "title": "股票分析",
-    "subtitle": "使用所選後端資料提供者執行 AlphaCouncil 代理委員會並儲存決策。",
+    "subtitle": "使用所選後端資料提供者執行 Wisoka Compass 代理委員會並儲存決策。",
     "timeHorizon": "時間範圍",
     "strategyPreference": "策略偏好",
     "run": "執行分析",
@@ -190,7 +203,7 @@
   "watchlist": {
     "eyebrow": "研究佇列",
     "title": "觀察清單",
-    "subtitle": "追蹤未來要由 AlphaCouncil 檢視的代號。此 MVP 中訊號仍以模擬資料為基礎。",
+    "subtitle": "追蹤未來要由 Wisoka Compass 檢視的代號。此 MVP 中訊號仍以模擬資料為基礎。",
     "notesPlaceholder": "監控原因",
     "adding": "新增中...",
     "addTicker": "新增代號",
@@ -201,7 +214,7 @@
   "backtest": {
     "eyebrow": "歷史模擬",
     "title": "回測",
-    "subtitle": "使用所選 AlphaCouncil 資料提供者執行單一標的、多頭限定策略模擬。結果是研究素材，不是績效承諾。",
+    "subtitle": "使用所選 Wisoka Compass 資料提供者執行單一標的、多頭限定策略模擬。結果是研究素材，不是績效承諾。",
     "helper": "使用所選策略與資料提供者執行歷史模擬。",
     "examples": "範例：US: NVDA · JP: 7203 · TW: 2330 · KR: 005930",
     "startDate": "開始日期",
@@ -276,7 +289,15 @@
     "provider": "提供者",
     "model": "模型",
     "customModel": "自訂模型",
+    "customModelOption": "自訂模型...",
+    "customModelId": "自訂模型 ID",
     "customModelPlaceholder": "輸入模型名稱",
+    "modelCatalog": "模型目錄",
+    "modelCatalogHelp": "模型清單會在可行時從提供者載入並快取於本機。你也可以隨時輸入自訂模型 ID。",
+    "modelSource": "來源",
+    "fetchedAt": "擷取時間",
+    "refreshModels": "重新整理模型",
+    "refreshingModels": "重新整理中...",
     "apiKey": "API 金鑰",
     "baseUrl": "Base URL",
     "temperature": "溫度",
@@ -317,7 +338,7 @@
   "evaluation": {
     "eyebrow": "研究分析",
     "title": "決策評估",
-    "subtitle": "使用歷史提供者資料列檢視 AlphaCouncil 已儲存決策之後發生的情況。這是觀察性研究，不是未來獲利聲明。",
+    "subtitle": "使用歷史提供者資料列檢視 Wisoka Compass 已儲存決策之後發生的情況。這是觀察性研究，不是未來獲利聲明。",
     "evaluateAll": "評估所有合格決策",
     "evaluating": "評估中...",
     "disclaimer": "決策評估僅為歷史與觀察用途，不證明未來獲利能力。",

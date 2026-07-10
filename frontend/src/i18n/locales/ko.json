@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "AlphaCouncil"
+    "name": "Wisoka Compass",
+    "shortName": "Wisoka"
   },
   "language": {
     "label": "언어",
@@ -8,6 +9,18 @@
     "traditionalChinese": "繁體中文",
     "japanese": "日本語",
     "korean": "한국어"
+  },
+  "appearance": {
+    "title": "외관",
+    "subtitle": "Wisoka Compass의 표시 방식을 선택합니다.",
+    "light": "라이트",
+    "dark": "다크",
+    "system": "시스템",
+    "lightDescription": "주간 사용에 맞춘 밝은 블루 작업 공간입니다.",
+    "darkDescription": "기본 블루 리서치 데스크입니다.",
+    "followSystem": "시스템 환경설정을 따릅니다. {{current}}",
+    "currentlyLight": "현재 라이트",
+    "currentlyDark": "현재 다크"
   },
   "sidebar": {
     "researchDesk": "리서치 데스크",
@@ -150,7 +163,7 @@
   "analysis": {
     "eyebrow": "위원회 워크플로",
     "title": "주식 분석",
-    "subtitle": "선택한 백엔드 데이터 제공자로 AlphaCouncil 에이전트 위원회를 실행하고 의사결정을 저장합니다.",
+    "subtitle": "선택한 백엔드 데이터 제공자로 Wisoka Compass 에이전트 위원회를 실행하고 의사결정을 저장합니다.",
     "timeHorizon": "시간 범위",
     "strategyPreference": "전략 선호",
     "run": "분석 실행",
@@ -190,7 +203,7 @@
   "watchlist": {
     "eyebrow": "리서치 대기열",
     "title": "관심 목록",
-    "subtitle": "향후 AlphaCouncil 검토를 위한 티커를 추적합니다. 이 MVP의 신호는 모의 데이터 기반입니다.",
+    "subtitle": "향후 Wisoka Compass 검토를 위한 티커를 추적합니다. 이 MVP의 신호는 모의 데이터 기반입니다.",
     "notesPlaceholder": "관찰 이유",
     "adding": "추가 중...",
     "addTicker": "티커 추가",
@@ -201,7 +214,7 @@
   "backtest": {
     "eyebrow": "과거 시뮬레이션",
     "title": "백테스트",
-    "subtitle": "선택한 AlphaCouncil 데이터 제공자로 단일 종목, 롱 전용 전략 시뮬레이션을 실행합니다. 결과는 리서치 자료이며 성과 약속이 아닙니다.",
+    "subtitle": "선택한 Wisoka Compass 데이터 제공자로 단일 종목, 롱 전용 전략 시뮬레이션을 실행합니다. 결과는 리서치 자료이며 성과 약속이 아닙니다.",
     "helper": "선택한 전략과 데이터 제공자를 사용해 과거 시뮬레이션을 실행합니다.",
     "examples": "예: US: NVDA · JP: 7203 · TW: 2330 · KR: 005930",
     "startDate": "시작일",
@@ -276,7 +289,15 @@
     "provider": "제공자",
     "model": "모델",
     "customModel": "사용자 지정 모델",
+    "customModelOption": "사용자 지정 모델...",
+    "customModelId": "사용자 지정 모델 ID",
     "customModelPlaceholder": "모델 이름 입력",
+    "modelCatalog": "모델 카탈로그",
+    "modelCatalogHelp": "가능한 경우 모델 목록은 제공자에서 불러오고 로컬에 캐시됩니다. 언제든 사용자 지정 모델 ID를 입력할 수 있습니다.",
+    "modelSource": "소스",
+    "fetchedAt": "가져온 시간",
+    "refreshModels": "모델 새로고침",
+    "refreshingModels": "새로고침 중...",
     "apiKey": "API 키",
     "baseUrl": "Base URL",
     "temperature": "온도",
@@ -317,7 +338,7 @@
   "evaluation": {
     "eyebrow": "리서치 분석",
     "title": "의사결정 평가",
-    "subtitle": "저장된 AlphaCouncil 의사결정 이후 무슨 일이 있었는지 과거 제공자 데이터로 검토합니다. 이는 관찰적 리서치이며 미래 수익성을 주장하지 않습니다.",
+    "subtitle": "저장된 Wisoka Compass 의사결정 이후 무슨 일이 있었는지 과거 제공자 데이터로 검토합니다. 이는 관찰적 리서치이며 미래 수익성을 주장하지 않습니다.",
     "evaluateAll": "대상 전체 평가",
     "evaluating": "평가 중...",
     "disclaimer": "의사결정 평가는 과거와 관찰 목적일 뿐이며 미래 수익성을 입증하지 않습니다.",

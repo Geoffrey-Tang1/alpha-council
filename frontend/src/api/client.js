@@ -45,6 +45,18 @@ export function getLlmSettings() {
   return request("/llm/settings");
 }
 
+export function getLlmModels(provider) {
+  const query = new URLSearchParams({ provider });
+  return request(`/llm/models?${query.toString()}`);
+}
+
+export function refreshLlmModels(provider) {
+  return request("/llm/models/refresh", {
+    method: "POST",
+    body: JSON.stringify({ provider })
+  });
+}
+
 export function updateLlmSettings(payload) {
   return request("/llm/settings", {
     method: "PATCH",

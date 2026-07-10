@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "AlphaCouncil"
+    "name": "Wisoka Compass",
+    "shortName": "Wisoka"
   },
   "language": {
     "label": "言語",
@@ -8,6 +9,18 @@
     "traditionalChinese": "繁體中文",
     "japanese": "日本語",
     "korean": "한국어"
+  },
+  "appearance": {
+    "title": "外観",
+    "subtitle": "Wisoka Compass の表示外観を選択します。",
+    "light": "ライト",
+    "dark": "ダーク",
+    "system": "システム",
+    "lightDescription": "日中利用向けの明るいブルーのワークスペース。",
+    "darkDescription": "標準のブルー系リサーチデスク。",
+    "followSystem": "システム設定に従います。{{current}}",
+    "currentlyLight": "現在はライト",
+    "currentlyDark": "現在はダーク"
   },
   "sidebar": {
     "researchDesk": "リサーチデスク",
@@ -150,7 +163,7 @@
   "analysis": {
     "eyebrow": "委員会ワークフロー",
     "title": "株式分析",
-    "subtitle": "選択したバックエンドデータ提供元で AlphaCouncil のエージェント委員会を実行し、判断を保存します。",
+    "subtitle": "選択したバックエンドデータ提供元で Wisoka Compass のエージェント委員会を実行し、判断を保存します。",
     "timeHorizon": "投資期間",
     "strategyPreference": "戦略の優先設定",
     "run": "分析を実行",
@@ -190,7 +203,7 @@
   "watchlist": {
     "eyebrow": "リサーチキュー",
     "title": "ウォッチリスト",
-    "subtitle": "今後 AlphaCouncil で確認するティッカーを追跡します。この MVP のシグナルはモックデータに基づきます。",
+    "subtitle": "今後 Wisoka Compass で確認するティッカーを追跡します。この MVP のシグナルはモックデータに基づきます。",
     "notesPlaceholder": "監視理由",
     "adding": "追加中...",
     "addTicker": "ティッカーを追加",
@@ -201,7 +214,7 @@
   "backtest": {
     "eyebrow": "履歴シミュレーション",
     "title": "バックテスト",
-    "subtitle": "選択した AlphaCouncil データ提供元で単一銘柄・ロングのみの戦略シミュレーションを実行します。結果は研究用であり、パフォーマンスの約束ではありません。",
+    "subtitle": "選択した Wisoka Compass データ提供元で単一銘柄・ロングのみの戦略シミュレーションを実行します。結果は研究用であり、パフォーマンスの約束ではありません。",
     "helper": "選択した戦略とデータ提供元で履歴シミュレーションを実行します。",
     "examples": "例：US: NVDA · JP: 7203 · TW: 2330 · KR: 005930",
     "startDate": "開始日",
@@ -276,7 +289,15 @@
     "provider": "提供元",
     "model": "モデル",
     "customModel": "カスタムモデル",
+    "customModelOption": "カスタムモデル...",
+    "customModelId": "カスタムモデル ID",
     "customModelPlaceholder": "モデル名を入力",
+    "modelCatalog": "モデルカタログ",
+    "modelCatalogHelp": "モデル一覧は可能な場合に提供元から取得され、ローカルにキャッシュされます。いつでもカスタムモデル ID を入力できます。",
+    "modelSource": "ソース",
+    "fetchedAt": "取得日時",
+    "refreshModels": "モデルを更新",
+    "refreshingModels": "更新中...",
     "apiKey": "API キー",
     "baseUrl": "Base URL",
     "temperature": "温度",
@@ -317,7 +338,7 @@
   "evaluation": {
     "eyebrow": "リサーチ分析",
     "title": "意思決定評価",
-    "subtitle": "保存された AlphaCouncil の意思決定後に何が起きたかを履歴データで確認します。これは観察的リサーチであり、将来の収益性を主張するものではありません。",
+    "subtitle": "保存された Wisoka Compass の意思決定後に何が起きたかを履歴データで確認します。これは観察的リサーチであり、将来の収益性を主張するものではありません。",
     "evaluateAll": "対象をすべて評価",
     "evaluating": "評価中...",
     "disclaimer": "意思決定評価は履歴的・観察的な用途のみです。将来の収益性を証明するものではありません。",
