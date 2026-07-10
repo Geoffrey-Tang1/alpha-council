@@ -133,6 +133,7 @@ class DecisionRepository:
 
         payload.setdefault("llm_enabled", False)
         payload.setdefault("llm_provider", "disabled")
+        payload.setdefault("llm_model", None)
         payload.setdefault("llm_used", False)
         payload.setdefault("llm_warnings", [])
         payload.setdefault("llm_outputs", {})

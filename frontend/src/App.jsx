@@ -6,6 +6,7 @@ import BacktestPage from "./pages/BacktestPage.jsx";
 import DecisionDetailPage from "./pages/DecisionDetailPage.jsx";
 import DecisionLogPage from "./pages/DecisionLogPage.jsx";
 import EvaluationPage from "./pages/EvaluationPage.jsx";
+import SettingsPage from "./pages/SettingsPage.jsx";
 import StockAnalysisPage from "./pages/StockAnalysisPage.jsx";
 import WatchlistPage from "./pages/WatchlistPage.jsx";
 
@@ -33,6 +34,7 @@ export default function App() {
       {page === "backtest" && <BacktestPage />}
       {page === "evaluations" && <EvaluationPage />}
       {page === "decisions" && <DecisionLogPage onSelectDecision={openDecision} />}
+      {page === "settings" && <SettingsPage />}
       {page === "decisionDetail" && (
         <DecisionDetailPage decisionId={selectedDecisionId} onBack={() => navigate("decisions")} />
       )}

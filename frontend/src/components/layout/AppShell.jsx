@@ -14,7 +14,8 @@ export default function AppShell({ currentPage, onNavigate, children }) {
     ["watchlist", "sidebar.nav.watchlist"],
     ["backtest", "sidebar.nav.backtest"],
     ["evaluations", "sidebar.nav.evaluations"],
-    ["decisions", "sidebar.nav.decisions"]
+    ["decisions", "sidebar.nav.decisions"],
+    ["settings", "sidebar.nav.settings"]
   ];
 
   useEffect(() => {

@@ -55,12 +55,12 @@ export default function StockAnalysisPage() {
       </div>
 
       <Card>
-        <form className="analysis-form" onSubmit={submitAnalysis}>
-          <label>
+        <form className="analysis-form analysis-form-grid" onSubmit={submitAnalysis}>
+          <label className="form-field">
             {t("common.ticker")}
             <input name="ticker" value={form.ticker} onChange={updateField} required />
           </label>
-          <label>
+          <label className="form-field">
             {t("common.market")}
             <select name="market" value={form.market} onChange={updateField}>
               <option value="US">US</option>
@@ -69,7 +69,7 @@ export default function StockAnalysisPage() {
               <option value="KR">KR</option>
             </select>
           </label>
-          <label>
+          <label className="form-field">
             {t("analysis.timeHorizon")}
             <select name="time_horizon" value={form.time_horizon} onChange={updateField}>
               <option value="intraday">{t("analysis.horizons.intraday")}</option>
@@ -78,7 +78,7 @@ export default function StockAnalysisPage() {
               <option value="long_term">{t("analysis.horizons.long_term")}</option>
             </select>
           </label>
-          <label>
+          <label className="form-field strategy-field">
             {t("analysis.strategyPreference")}
             <select name="strategy_preference" value={form.strategy_preference} onChange={updateField}>
               <option value="moving_average_crossover">{strategyLabel(t, "moving_average_crossover")}</option>
@@ -86,7 +86,9 @@ export default function StockAnalysisPage() {
               <option value="breakout_n_day_high">{strategyLabel(t, "breakout_n_day_high")}</option>
             </select>
           </label>
-          <Button type="submit" disabled={loading}>{loading ? t("analysis.running") : t("analysis.run")}</Button>
+          <div className="form-actions analysis-form-actions">
+            <Button type="submit" disabled={loading}>{loading ? t("analysis.running") : t("analysis.run")}</Button>
+          </div>
         </form>
       </Card>
 

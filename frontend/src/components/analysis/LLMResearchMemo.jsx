@@ -7,6 +7,14 @@ function providerLabel(t, provider) {
   if (provider === "mock") return t("llm.mockLlm");
   if (provider === "openai") return t("llm.openai");
   if (provider === "anthropic") return t("llm.anthropic");
+  if (provider === "gemini") return t("settings.providers.gemini");
+  if (provider === "deepseek") return t("settings.providers.deepseek");
+  if (provider === "xai") return t("settings.providers.xai");
+  if (provider === "mistral") return t("settings.providers.mistral");
+  if (provider === "groq") return t("settings.providers.groq");
+  if (provider === "openrouter") return t("settings.providers.openrouter");
+  if (provider === "ollama") return t("settings.providers.ollama");
+  if (provider === "custom_openai_compatible") return t("settings.providers.custom_openai_compatible");
   return t("llm.disabled");
 }
 
@@ -65,6 +73,10 @@ export default function LLMResearchMemo({ decision }) {
           <h3>{t("llm.title")}</h3>
           <p className="muted">
             {t("llm.used")}: {decision.llm_used ? t("llm.yes") : t("llm.no")}
+          </p>
+          <p className="muted">
+            {t("settings.provider")}: {providerLabel(t, decision.llm_provider)} · {t("settings.model")}:{" "}
+            {decision.llm_model || outputs.decision_memo?.model || "none"}
           </p>
         </div>
         <div className="decision-badges">

@@ -55,14 +55,14 @@ def test_openai_missing_api_key_falls_back_without_external_call(client, monkeyp
     assert status["llm_provider"] == "openai"
     assert status["enabled"] is False
     assert status["available"] is False
-    assert "OPENAI_API_KEY is missing" in status["warnings"][0]
+    assert "API key is missing" in status["warnings"][0]
 
     assert analysis_response.status_code == 200
     body = analysis_response.json()
     assert body["llm_enabled"] is False
     assert body["llm_provider"] == "openai"
     assert body["llm_used"] is False
-    assert "OPENAI_API_KEY is missing" in body["llm_warnings"][0]
+    assert "API key is missing" in body["llm_warnings"][0]
 
 
 def test_provider_registry_selects_mock_llm(monkeypatch):

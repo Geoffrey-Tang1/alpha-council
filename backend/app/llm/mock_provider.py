@@ -9,8 +9,11 @@ class MockLLMProvider(BaseLLMProvider):
     enabled = True
     available = True
 
-    def __init__(self) -> None:
-        super().__init__(warnings=["Mock LLM provider active; outputs are deterministic development summaries."])
+    def __init__(self, model_name: str = "mock-llm-v1") -> None:
+        super().__init__(
+            warnings=["Mock LLM provider active; outputs are deterministic development summaries."],
+            model_name=model_name,
+        )
 
     def generate_bull_bear_summary(self, context: LLMDecisionContext) -> LLMGenerationResponse:
         bull = "; ".join(context.bull_points[:2]) or "No strong bull evidence."

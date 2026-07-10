@@ -36,6 +36,7 @@ class DecisionResponse(BaseModel):
     data_warnings: list[str]
     llm_enabled: bool = False
     llm_provider: str = "disabled"
+    llm_model: str | None = None
     llm_used: bool = False
     llm_warnings: list[str] = Field(default_factory=list)
     llm_outputs: LLMDecisionOutputs = Field(default_factory=LLMDecisionOutputs)
@@ -58,6 +59,7 @@ class DecisionSummary(BaseModel):
     final_explanation: str
     llm_enabled: bool = False
     llm_provider: str = "disabled"
+    llm_model: str | None = None
     llm_used: bool = False
 
 

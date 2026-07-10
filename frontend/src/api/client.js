@@ -37,6 +37,28 @@ export function getLLMStatus() {
   return request("/llm/status");
 }
 
+export function getLlmStatus() {
+  return getLLMStatus();
+}
+
+export function getLlmSettings() {
+  return request("/llm/settings");
+}
+
+export function updateLlmSettings(payload) {
+  return request("/llm/settings", {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function testLlmConnection(payload) {
+  return request("/llm/test", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 export function getWatchlist() {
   return request("/watchlist");
 }

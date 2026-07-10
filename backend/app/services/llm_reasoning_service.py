@@ -8,6 +8,7 @@ class LLMReasoningService:
     def enrich_decision(self, decision: DecisionResponse) -> DecisionResponse:
         provider = get_llm_provider()
         decision.llm_provider = provider.provider_name
+        decision.llm_model = provider.model_name
         decision.llm_enabled = provider.enabled
 
         if not provider.enabled:

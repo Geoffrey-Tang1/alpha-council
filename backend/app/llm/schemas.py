@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -62,3 +63,60 @@ class LLMStatusResponse(BaseModel):
     available: bool
     model: str | None = None
     warnings: list[str] = Field(default_factory=list)
+
+
+class LLMProviderName(StrEnum):
+    DISABLED = "disabled"
+    MOCK = "mock"
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    GEMINI = "gemini"
+    DEEPSEEK = "deepseek"
+    XAI = "xai"
+    MISTRAL = "mistral"
+    GROQ = "groq"
+    OPENROUTER = "openrouter"
+    OLLAMA = "ollama"
+    CUSTOM_OPENAI_COMPATIBLE = "custom_openai_compatible"
+
+
+class LLMSettingsResponse(BaseModel):
+    llm_provider: LLMProviderName
+    enable_llm_reasoning: bool
+    selected_model: str
+    api_key_present: bool
+    masked_api_key: str | None = None
+    base_url: str | None = None
+    temperature: float = Field(ge=0, le=2)
+    max_tokens: int = Field(ge=128, le=8000)
+    timeout_seconds: int = Field(ge=5, le=120)
+    available_models: list[str]
+    last_connection_status: str
+    last_connection_message: str
+    updated_at: str
+
+
+class LLMSettingsUpdate(BaseModel):
+    llm_provider: LLMProviderName | None = None
+    enable_llm_reasoning: bool | None = None
+    selected_model: str | None = Field(default=None, min_length=1, max_length=160)
+    api_key: str | None = Field(default=None, max_length=4096)
+    base_url: str | None = Field(default=None, max_length=512)
+    temperature: float | None = Field(default=None, ge=0, le=2)
+    max_tokens: int | None = Field(default=None, ge=128, le=8000)
+    timeout_seconds: int | None = Field(default=None, ge=5, le=120)
+
+
+class LLMConnectionTestRequest(BaseModel):
+    llm_provider: LLMProviderName
+    selected_model: str | None = Field(default=None, max_length=160)
+    api_key: str | None = Field(default=None, max_length=4096)
+    base_url: str | None = Field(default=None, max_length=512)
+
+
+class LLMConnectionTestResponse(BaseModel):
+    success: bool
+    provider: LLMProviderName
+    model: str
+    message: str
+    latency_ms: int

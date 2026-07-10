@@ -8,7 +8,9 @@ class BaseLLMProvider:
     enabled = False
     available = False
 
-    def __init__(self, warnings: list[str] | None = None) -> None:
+    def __init__(self, warnings: list[str] | None = None, model_name: str | None = None) -> None:
+        if model_name is not None:
+            self.model_name = model_name
         self.warnings = warnings or []
 
     def status(self) -> LLMStatusResponse:
@@ -53,6 +55,30 @@ class DisabledLLMProvider(BaseLLMProvider):
     enabled = False
     available = False
 
-    def __init__(self, provider_name: str = "disabled", warnings: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        provider_name: str = "disabled",
+        warnings: list[str] | None = None,
+        model_name: str | None = None,
+    ) -> None:
         self.provider_name = provider_name
-        super().__init__(warnings=warnings or ["LLM reasoning disabled."])
+        super().__init__(warnings=warnings or ["LLM reasoning disabled."], model_name=model_name)
+
+
+class StubbedLLMProvider(DisabledLLMProvider):
+    def __init__(
+        self,
+        provider_name: str,
+        model_name: str,
+        api_key: str | None,
+        requires_api_key: bool = True,
+    ) -> None:
+        if requires_api_key and not api_key:
+            warning = "API key is missing for selected provider; falling back to deterministic mode."
+        else:
+            warning = "Provider configuration is available, but live API calls are not implemented in this phase."
+        super().__init__(
+            provider_name=provider_name,
+            warnings=[warning],
+            model_name=model_name,
+        )
