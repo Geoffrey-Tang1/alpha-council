@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 import pandas as pd
@@ -76,15 +76,18 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
         conflict = self._suffix_conflict(ticker, market)
         metadata = build_instrument_metadata(ticker=ticker, market=market)
         profile = {} if conflict else self._safe_call(lambda: self.provider.get_company_profile(ticker=ticker, market=market), {})
-        display_name = profile.get("company_name") or metadata["company_name"]
         provider_symbol = metadata["normalized_ticker"]
         warnings = self._status_warnings()
         if conflict:
             warnings.append(conflict)
+        company_name = self._safe_optional_string(profile.get("company_name"), "company_name", warnings)
+        display_name = company_name or metadata["company_name"]
+        exchange = self._safe_optional_string(profile.get("exchange"), "exchange", warnings) or MARKET_EXCHANGE.get(market)
+        currency = self._safe_optional_string(profile.get("currency"), "currency", warnings) or MARKET_CURRENCY.get(market)
         source = self._source(
             provider_symbol=provider_symbol,
             observed_at=None,
-            currency=MARKET_CURRENCY.get(market),
+            currency=currency,
             warnings=warnings,
         )
         availability = DataAvailability.UNSUPPORTED if conflict else DataAvailability.AVAILABLE
@@ -93,9 +96,9 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
             symbol=metadata["ticker"],
             display_symbol=metadata["display_symbol"],
             provider_symbol=provider_symbol,
-            exchange=profile.get("exchange") or MARKET_EXCHANGE.get(market),
+            exchange=exchange,
             market=market,
-            currency=MARKET_CURRENCY.get(market),
+            currency=currency,
             instrument_type=self._instrument_type(profile),
             legal_name=display_name if display_name != "Unknown Company" else None,
             display_name=display_name,
@@ -248,33 +251,47 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
             {},
         )
         availability = DataAvailability.AVAILABLE if raw else instrument.availability_status
+        warnings = [*instrument.warnings]
+        legal_name = self._safe_optional_string(raw.get("company_name"), "company_name", warnings)
+        display_name = legal_name or instrument.display_name
+        description = self._safe_optional_string(raw.get("description"), "description", warnings)
+        sector = self._safe_optional_string(raw.get("sector"), "sector", warnings)
+        industry = self._safe_optional_string(raw.get("industry"), "industry", warnings)
+        country = self._safe_optional_string(raw.get("country"), "country", warnings)
+        exchange = self._safe_optional_string(raw.get("exchange"), "exchange", warnings) or instrument.exchange
+        currency = self._safe_optional_string(raw.get("currency"), "currency", warnings) or instrument.currency
+        website = self._safe_optional_string(raw.get("website"), "website", warnings)
+        fiscal_year_end = self._safe_timestamp_to_date_string(raw.get("fiscal_year_end"), "fiscal_year_end", warnings)
+        market_cap = self._safe_optional_float(raw.get("market_cap"), "market_cap", warnings)
+        employee_count = self._safe_optional_int(raw.get("employee_count"), "employee_count", warnings)
+        source = self._source(
+            provider_symbol=instrument.provider_symbol,
+            observed_at=None,
+            currency=currency,
+            warnings=warnings,
+        )
         return CompanyProfile(
             instrument_id=instrument.instrument_id,
             symbol=instrument.symbol,
             market=market,
-            legal_name=raw.get("company_name") if raw.get("company_name") != "Unknown Company" else None,
-            display_name=raw.get("company_name") or instrument.display_name,
-            description=raw.get("description"),
-            sector=raw.get("sector"),
-            industry=raw.get("industry"),
-            country=raw.get("country"),
-            exchange=raw.get("exchange") or instrument.exchange,
-            currency=instrument.currency,
-            website=raw.get("website"),
-            market_cap=self._float_or_none(raw.get("market_cap")),
-            employee_count=self._int_or_none(raw.get("employee_count")),
-            fiscal_year_end=raw.get("fiscal_year_end"),
+            legal_name=legal_name if legal_name != "Unknown Company" else None,
+            display_name=display_name,
+            description=description,
+            sector=sector,
+            industry=industry,
+            country=country,
+            exchange=exchange,
+            currency=currency,
+            website=website,
+            market_cap=market_cap,
+            employee_count=employee_count,
+            fiscal_year_end=fiscal_year_end,
             instrument_type=instrument.instrument_type,
             availability_status=availability,
             freshness_status=DataFreshness.UNKNOWN if availability == DataAvailability.AVAILABLE else DataFreshness.UNAVAILABLE,
             confidence=0.74 if availability == DataAvailability.AVAILABLE else 0,
-            source=self._source(
-                provider_symbol=instrument.provider_symbol,
-                observed_at=None,
-                currency=instrument.currency,
-                warnings=instrument.warnings,
-            ),
-            warnings=instrument.warnings,
+            source=source,
+            warnings=warnings,
         )
 
     def get_financial_metrics(self, ticker: str, market: MarketCode) -> FinancialMetricSet:
@@ -298,9 +315,13 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
             ("market_cap", raw.get("market_cap"), instrument.currency, "reported"),
         ]
         metrics = [
-            self._metric(name, value, currency, reported_or_derived, source)
-            for name, value, currency, reported_or_derived in metric_specs
-            if value is not None and value != ""
+            metric
+            for metric in [
+                self._metric(name, value, currency, reported_or_derived, source)
+                for name, value, currency, reported_or_derived in metric_specs
+                if value is not None and value != ""
+            ]
+            if metric is not None
         ]
         availability = DataAvailability.AVAILABLE if metrics else DataAvailability.UNAVAILABLE
         warnings = []
@@ -362,9 +383,13 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
             ("earnings_yield", self._earnings_yield(raw.get("trailing_pe")), None, "derived", "1 / trailing_pe"),
         ]
         metrics = [
-            self._metric(name, value, currency, reported_or_derived, source, formula=formula)
-            for name, value, currency, reported_or_derived, formula in metric_specs
-            if value is not None and value != ""
+            metric
+            for metric in [
+                self._metric(name, value, currency, reported_or_derived, source, formula=formula)
+                for name, value, currency, reported_or_derived, formula in metric_specs
+                if value is not None and value != ""
+            ]
+            if metric is not None
         ]
         availability = DataAvailability.AVAILABLE if metrics else DataAvailability.UNAVAILABLE
         warnings = [] if metrics else ["No normalized valuation metrics were available from the active provider."]
@@ -446,10 +471,14 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
         reported_or_derived: str,
         source: DataSourceMetadata,
         formula: str | None = None,
-    ) -> FinancialMetric:
+    ) -> FinancialMetric | None:
+        warnings = list(source.warnings)
+        normalized_value = self._safe_metric_number(value, name, warnings)
+        if normalized_value is None:
+            return None
         return FinancialMetric(
             name=name,
-            value=self._float_or_original(value),
+            value=normalized_value,
             currency=currency,
             reported_or_derived=reported_or_derived,
             formula=formula,
@@ -457,7 +486,9 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
                 "transformation_type": "derived_calculation" if reported_or_derived == "derived" else "provider_normalization",
                 "is_derived": reported_or_derived == "derived",
                 "formula": formula,
+                "warnings": warnings,
             }),
+            warnings=[warning for warning in warnings if warning not in source.warnings],
         )
 
     def _source(
@@ -509,6 +540,101 @@ class LegacyMarketDataFinancialAdapter(FinancialDataProviderAdapter):
             return fn()
         except Exception:
             return default
+
+    def _safe_optional_string(self, value, field_name: str, warnings: list[str]) -> str | None:
+        if value is None:
+            return None
+        try:
+            if pd.isna(value):
+                return None
+        except (TypeError, ValueError):
+            pass
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        if isinstance(value, (int, float, bool)):
+            normalized = str(value).strip()
+            warnings.append(f"Provider profile field {field_name} was {type(value).__name__}; converted to string.")
+            return normalized or None
+        warnings.append(f"Provider profile field {field_name} had unsupported type {type(value).__name__}; omitted.")
+        return None
+
+    def _safe_optional_float(self, value, field_name: str, warnings: list[str]) -> float | None:
+        if value is None:
+            return None
+        try:
+            if pd.isna(value):
+                return None
+            normalized = float(value)
+        except (TypeError, ValueError):
+            warnings.append(f"Provider numeric profile field {field_name} was malformed; omitted.")
+            return None
+        if normalized != normalized or normalized in {float("inf"), float("-inf")}:
+            warnings.append(f"Provider numeric profile field {field_name} was not finite; omitted.")
+            return None
+        return normalized
+
+    def _safe_optional_int(self, value, field_name: str, warnings: list[str]) -> int | None:
+        if value is None:
+            return None
+        try:
+            if pd.isna(value):
+                return None
+            normalized = int(value)
+        except (TypeError, ValueError):
+            warnings.append(f"Provider integer profile field {field_name} was malformed; omitted.")
+            return None
+        return normalized
+
+    def _safe_timestamp_to_date_string(self, value, field_name: str, warnings: list[str]) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        if isinstance(value, (int, float)):
+            try:
+                if pd.isna(value):
+                    return None
+                # yfinance commonly returns Unix timestamps in seconds for
+                # fiscal-year fields. Keep conversion conservative: values that
+                # do not land in a plausible market-data era are omitted.
+                parsed = datetime.fromtimestamp(float(value), tz=timezone.utc).date()
+            except (OverflowError, OSError, TypeError, ValueError):
+                warnings.append(f"Provider profile field {field_name} timestamp could not be converted; omitted.")
+                return None
+            if parsed.year < 1970 or parsed.year > 2200:
+                warnings.append(f"Provider profile field {field_name} timestamp was outside a plausible range; omitted.")
+                return None
+            warnings.append(f"Provider profile field {field_name} timestamp was normalized to ISO date.")
+            return parsed.isoformat()
+        warnings.append(f"Provider profile field {field_name} had unsupported type {type(value).__name__}; omitted.")
+        return None
+
+    def _safe_metric_number(self, value, field_name: str, warnings: list[str]) -> float | None:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            warnings.append(f"Provider metric field {field_name} was boolean; omitted.")
+            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return None
+            try:
+                normalized = float(stripped)
+            except ValueError:
+                warnings.append(f"Provider metric field {field_name} was non-numeric text; omitted.")
+                return None
+        else:
+            normalized = self._float_or_none(value)
+            if normalized is None:
+                warnings.append(f"Provider metric field {field_name} was malformed; omitted.")
+                return None
+        if normalized != normalized or normalized in {float("inf"), float("-inf")}:
+            warnings.append(f"Provider metric field {field_name} was not finite; omitted.")
+            return None
+        return normalized
 
     def _round_or_none(self, value: float | None) -> float | None:
         return round(float(value), 6) if value is not None else None

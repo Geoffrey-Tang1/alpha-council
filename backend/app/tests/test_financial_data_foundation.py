@@ -20,6 +20,9 @@ from app.financial_data.schemas import (
     SourceType,
     utc_now_iso,
 )
+from app.schemas.analysis import AnalysisRequest
+from app.services import analysis_service as analysis_module
+from app.services.analysis_service import AnalysisService
 from app.services.financial_data_service import FinancialDataService
 
 
@@ -39,6 +42,17 @@ class DuplicateHistoryProvider(MockDataProvider):
                 {"date": "2026-01-02", "open": 11, "high": 12, "low": 10, "close": 11, "volume": 200},
             ]
         )
+
+
+class UnsafeProfileProvider(MockDataProvider):
+    def __init__(self, profile_overrides: dict) -> None:
+        super().__init__()
+        self.profile_overrides = profile_overrides
+
+    def get_company_profile(self, ticker: str, market: MarketCode) -> dict:
+        profile = super().get_company_profile(ticker=ticker, market=market)
+        profile.update(self.profile_overrides)
+        return profile
 
 
 class CountingQuoteAdapter(FinancialDataProviderAdapter):
@@ -151,6 +165,70 @@ def test_financial_and_valuation_metrics_are_normalized():
     assert earnings_yield.formula == "1 / trailing_pe"
 
 
+def test_company_profile_normalizes_fiscal_year_end_timestamp():
+    adapter = LegacyMarketDataFinancialAdapter(
+        UnsafeProfileProvider({"fiscal_year_end": 1769299200})
+    )
+
+    profile = adapter.get_company_profile("NVDA", MarketCode.US)
+
+    assert profile.fiscal_year_end == "2026-01-25"
+    assert any("fiscal_year_end timestamp was normalized" in warning for warning in profile.warnings)
+
+
+def test_company_profile_keeps_fiscal_year_end_string():
+    adapter = LegacyMarketDataFinancialAdapter(
+        UnsafeProfileProvider({"fiscal_year_end": "2026-01-25"})
+    )
+
+    profile = adapter.get_company_profile("NVDA", MarketCode.US)
+
+    assert profile.fiscal_year_end == "2026-01-25"
+    assert not any("fiscal_year_end" in warning for warning in profile.warnings)
+
+
+def test_company_profile_omits_invalid_fiscal_year_end_with_warning():
+    adapter = LegacyMarketDataFinancialAdapter(
+        UnsafeProfileProvider({"fiscal_year_end": ["2026-01-25"]})
+    )
+
+    profile = adapter.get_company_profile("NVDA", MarketCode.US)
+
+    assert profile.fiscal_year_end is None
+    assert any("fiscal_year_end had unsupported type list" in warning for warning in profile.warnings)
+
+
+def test_company_profile_malformed_fields_return_warnings_not_validation_errors():
+    adapter = LegacyMarketDataFinancialAdapter(
+        UnsafeProfileProvider(
+            {
+                "sector": ["Technology"],
+                "industry": {"name": "Semiconductors"},
+                "country": 123,
+                "exchange": ["NASDAQ"],
+                "website": {"url": "https://example.invalid"},
+                "currency": ["USD"],
+                "market_cap": ["large"],
+                "employee_count": {"count": 1},
+                "fiscal_year_end": object(),
+            }
+        )
+    )
+
+    profile = adapter.get_company_profile("NVDA", MarketCode.US)
+
+    assert profile.sector is None
+    assert profile.industry is None
+    assert profile.country == "123"
+    assert profile.exchange == "US"
+    assert profile.website is None
+    assert profile.currency == "USD"
+    assert profile.market_cap is None
+    assert profile.employee_count is None
+    assert profile.fiscal_year_end is None
+    assert len(profile.warnings) >= 6
+
+
 def test_disabled_financial_provider_returns_unavailable_state():
     adapter = DisabledFinancialDataAdapter()
 
@@ -202,6 +280,37 @@ def test_financial_data_api_returns_provider_neutral_quote(client):
     assert body["availability_status"] == "available"
 
 
+def test_financial_data_snapshot_api_returns_snapshot(client):
+    response = client.get("/api/v1/financial-data/snapshot?ticker=NVDA&market=US")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["instrument"]["provider_symbol"] == "NVDA"
+    assert body["company_profile"]["display_name"] == "NVIDIA Corporation"
+    assert body["quote"]["availability_status"] == "available"
+
+
+def test_financial_snapshot_with_malformed_profile_fields_returns_warnings():
+    provider = UnsafeProfileProvider(
+        {
+            "fiscal_year_end": ["bad"],
+            "sector": ["Technology"],
+            "market_cap": {"value": 1},
+        }
+    )
+    service = FinancialDataService(
+        adapter=LegacyMarketDataFinancialAdapter(provider),
+        cache=FinancialDataCache(),
+    )
+
+    snapshot = service.get_research_snapshot("NVDA", MarketCode.US)
+
+    assert snapshot.company_profile.fiscal_year_end is None
+    assert snapshot.company_profile.sector is None
+    assert any("fiscal_year_end had unsupported type list" in warning for warning in snapshot.warnings)
+    assert any("sector had unsupported type list" in warning for warning in snapshot.warnings)
+
+
 def test_financial_data_status_is_safe_for_frontend(client):
     response = client.get("/api/v1/financial-data/status")
 
@@ -235,3 +344,31 @@ def test_research_report_includes_financial_data_provenance(client):
     assert valuation
     assert statements["availability_status"] == "unavailable"
     assert statements["source_reference"] is None
+
+
+def test_analysis_with_malformed_provider_profile_does_not_crash(monkeypatch):
+    provider = UnsafeProfileProvider(
+        {
+            "fiscal_year_end": 1769299200,
+            "sector": ["Technology"],
+            "market_cap": ["large"],
+        }
+    )
+    monkeypatch.setattr(analysis_module, "get_data_provider", lambda: provider)
+    service = AnalysisService()
+
+    decision = service.run_analysis(
+        AnalysisRequest(
+            ticker="NVDA",
+            market=MarketCode.US,
+            time_horizon="swing",
+            strategy_preference="moving_average_crossover",
+        )
+    )
+
+    assert decision.research_report is not None
+    assert any(
+        "fiscal_year_end timestamp was normalized" in warning
+        for item in decision.research_report.evidence
+        for warning in item.warnings
+    )

@@ -6,6 +6,7 @@ from app.core.constants import MarketCode
 from app.financial_data.schemas import (
     CompanyProfile,
     DataFetchResult,
+    FinancialDataSnapshot,
     FinancialMetricSet,
     HistoricalPriceSeries,
     InstrumentIdentity,
@@ -48,6 +49,11 @@ def get_quote(ticker: str = Query(min_length=1), market: MarketCode = Query()) -
     return FinancialDataService().get_quote(ticker=ticker, market=market)
 
 
+@router.get("/snapshot", response_model=FinancialDataSnapshot)
+def get_snapshot(ticker: str = Query(min_length=1), market: MarketCode = Query()) -> FinancialDataSnapshot:
+    return FinancialDataService().get_research_snapshot(ticker=ticker, market=market)
+
+
 @router.get("/history", response_model=HistoricalPriceSeries)
 def get_history(
     ticker: str = Query(min_length=1),
@@ -72,4 +78,3 @@ def get_financial_metrics(ticker: str = Query(min_length=1), market: MarketCode 
 @router.get("/valuation-metrics", response_model=ValuationMetricSet)
 def get_valuation_metrics(ticker: str = Query(min_length=1), market: MarketCode = Query()) -> ValuationMetricSet:
     return FinancialDataService().get_valuation_metrics(ticker=ticker, market=market)
-
