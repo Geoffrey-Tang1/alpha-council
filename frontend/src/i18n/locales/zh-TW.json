@@ -273,7 +273,20 @@
       "available": "可用",
       "partial": "部分",
       "unavailable": "不可用",
-      "failed": "失敗"
+      "unsupported": "不支援",
+      "failed": "失敗",
+      "stale_cache": "過期快取"
+    },
+    "freshnessStatuses": {
+      "fresh": "新鮮",
+      "current": "目前",
+      "delayed": "延遲",
+      "stale": "過期",
+      "materially_stale": "嚴重過期",
+      "partial": "部分",
+      "unknown": "未知",
+      "not_applicable": "不適用",
+      "unavailable": "不可用"
     },
     "confidenceLevels": {
       "low": "低",
@@ -293,7 +306,17 @@
       "model_inference": "模型推論",
       "mock_data": "模擬資料",
       "unavailable_source": "不可用來源"
-    }
+    },
+    "freshness": "新鮮度",
+    "delayedData": "延遲資料",
+    "providerSymbol": "供應商代號",
+    "currency": "貨幣",
+    "observedAt": "觀測時間",
+    "fetchedAt": "擷取時間",
+    "reportingPeriod": "報告期間",
+    "transformation": "轉換",
+    "formula": "公式",
+    "delayedBy": "延遲說明"
   },
   "decisionCard": {
     "latestPrice": "最新價格",
@@ -416,6 +439,11 @@
     "resetComplete": "LLM 設定已重設為停用。",
     "saved": "LLM 設定已儲存。",
     "currentStatus": "目前狀態",
+    "financialData": "金融資料",
+    "financialDataHelp": "此階段的金融資料設定僅由後端環境管理。API 金鑰不會暴露給前端。",
+    "activeProvider": "啟用供應商",
+    "cacheEntries": "快取項目",
+    "providerConfiguration": "供應商設定",
     "currentProvider": "目前提供者",
     "llmEnabled": "LLM 已啟用",
     "apiKeyPresent": "有 API 金鑰",

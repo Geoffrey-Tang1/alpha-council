@@ -4,6 +4,13 @@ from uuid import uuid4
 import pandas as pd
 
 from app.core.constants import DecisionAction
+from app.financial_data.schemas import (
+    DataAvailability as FinancialDataAvailability,
+    DataFreshness as FinancialDataFreshness,
+    DataSourceMetadata,
+    FinancialDataSnapshot,
+    FinancialMetric,
+)
 from app.llm.settings_store import get_llm_settings_response
 from app.schemas.agents import (
     BearCaseOutput,
@@ -152,6 +159,9 @@ class ResearchPipelineService:
             provider_metadata={
                 "data_provider": decision.data_provider,
                 "data_quality": decision.data_quality,
+                "financial_data_provider": financial_data.provider if (financial_data := self._financial_snapshot(collected_data)) else None,
+                "financial_data_availability": financial_data.availability_status if financial_data else None,
+                "financial_data_freshness": financial_data.freshness_status if financial_data else None,
                 "llm_provider": decision.llm_provider,
                 "llm_model": decision.llm_model,
                 "llm_used": decision.llm_used,
@@ -173,6 +183,8 @@ class ResearchPipelineService:
         source_type = self._provider_source_type(decision.data_provider, decision.data_quality)
         source_name = decision.data_provider or "unknown"
         history: pd.DataFrame = collected_data.get("price_history", pd.DataFrame())
+        financial_data = self._financial_snapshot(collected_data)
+        quote = financial_data.quote if financial_data else None
         evidence: list[EvidenceItem] = [
             self._evidence(
                 "ev_latest_price",
@@ -180,13 +192,15 @@ class ResearchPipelineService:
                 "Latest price",
                 f"Latest available price for {decision.display_symbol or decision.ticker}.",
                 decision.latest_price,
-                source_type,
-                source_name,
-                created_at,
+                self._provider_source_type(financial_data.provider, decision.data_quality) if financial_data else source_type,
+                quote.source.provider if quote else source_name,
+                quote.observed_at or created_at if quote else created_at,
                 EvidenceKind.FACTUAL_DATA,
                 EvidenceAvailabilityStatus.AVAILABLE if decision.latest_price is not None else EvidenceAvailabilityStatus.UNAVAILABLE,
                 confidence=0.85 if decision.latest_price is not None else 0.0,
                 limitation=None if decision.latest_price is not None else "Latest price is missing.",
+                source_metadata=quote.source if quote else None,
+                freshness=self._freshness_from_financial(quote.freshness_status) if quote else None,
             ),
             self._evidence(
                 "ev_market_status",
@@ -204,6 +218,9 @@ class ResearchPipelineService:
             ),
         ]
 
+        if financial_data:
+            evidence.extend(self._financial_evidence(financial_data, created_at))
+
         if not history.empty:
             evidence.append(
                 self._evidence(
@@ -219,6 +236,8 @@ class ResearchPipelineService:
                     EvidenceAvailabilityStatus.AVAILABLE if len(history) >= 60 else EvidenceAvailabilityStatus.PARTIAL,
                     confidence=0.8 if len(history) >= 60 else 0.45,
                     limitation=None if len(history) >= 60 else "Price history is short for medium-term confirmation.",
+                    source_metadata=financial_data.price_history.source if financial_data else None,
+                    freshness=self._freshness_from_financial(financial_data.price_history.freshness_status) if financial_data else None,
                 )
             )
         else:
@@ -250,7 +269,10 @@ class ResearchPipelineService:
                 )
             )
 
+        normalized_financial_keys = self._normalized_financial_keys(financial_data)
         for key, value in fundamental.key_metrics.items():
+            if key in normalized_financial_keys or key in {"availability_status", "freshness_status"}:
+                continue
             evidence.append(
                 self._evidence(
                     f"ev_fundamental_{key}",
@@ -378,6 +400,134 @@ class ResearchPipelineService:
 
         return evidence
 
+    def _financial_evidence(self, financial_data: FinancialDataSnapshot, created_at: str) -> list[EvidenceItem]:
+        evidence: list[EvidenceItem] = []
+        profile = financial_data.company_profile
+        if profile.availability_status != FinancialDataAvailability.UNAVAILABLE:
+            profile_bits = [
+                profile.display_name,
+                profile.sector,
+                profile.industry,
+                profile.exchange,
+                profile.currency,
+            ]
+            evidence.append(
+                self._evidence(
+                    "ev_instrument_profile",
+                    "instrument_overview",
+                    "Instrument profile",
+                    "Basic company and exchange metadata normalized from the active provider.",
+                    " · ".join(str(bit) for bit in profile_bits if bit),
+                    self._provider_source_type(financial_data.provider, "MOCK" if financial_data.provider == "mock" else "REAL"),
+                    profile.source.provider,
+                    profile.source.observed_at or created_at,
+                    EvidenceKind.FACTUAL_DATA,
+                    self._availability_from_financial(profile.availability_status),
+                    confidence=profile.confidence,
+                    limitation=None if profile.availability_status == FinancialDataAvailability.AVAILABLE else "Company profile is incomplete.",
+                    source_metadata=profile.source,
+                    freshness=self._freshness_from_financial(profile.freshness_status),
+                )
+            )
+        if financial_data.price_history.bars:
+            bars = financial_data.price_history.bars
+            if len(bars) >= 2 and bars[0].close and bars[-1].close:
+                evidence.append(
+                    self._evidence(
+                        "ev_price_return_available_window",
+                        "technical",
+                        "Available-window price return",
+                        f"Price return across the available daily history window ({bars[0].date} to {bars[-1].date}).",
+                        round((bars[-1].close / bars[0].close) - 1, 6),
+                        EvidenceSourceType.INTERNAL_CALCULATION,
+                        "financial_data_service",
+                        bars[-1].date,
+                        EvidenceKind.DERIVED_CALCULATION,
+                        EvidenceAvailabilityStatus.AVAILABLE,
+                        confidence=0.75,
+                        limitation="This is a historical calculation over available rows, not a forecast.",
+                        source_metadata=financial_data.price_history.source,
+                        freshness=self._freshness_from_financial(financial_data.price_history.freshness_status),
+                        formula="last_close / first_close - 1",
+                    )
+                )
+            drawdown = self._max_drawdown_from_bars(bars)
+            if drawdown is not None:
+                evidence.append(
+                    self._evidence(
+                        "ev_price_max_drawdown_available_window",
+                        "technical",
+                        "Available-window max drawdown",
+                        "Maximum close-to-close drawdown calculated from available daily history.",
+                        drawdown,
+                        EvidenceSourceType.INTERNAL_CALCULATION,
+                        "financial_data_service",
+                        bars[-1].date,
+                        EvidenceKind.DERIVED_CALCULATION,
+                        EvidenceAvailabilityStatus.AVAILABLE,
+                        confidence=0.72,
+                        limitation="Drawdown is calculated from available close prices only.",
+                        source_metadata=financial_data.price_history.source,
+                        freshness=self._freshness_from_financial(financial_data.price_history.freshness_status),
+                        formula="min(close / rolling_peak - 1)",
+                    )
+                )
+        for metric in financial_data.financial_metrics.metrics:
+            evidence.append(self._metric_evidence(metric, "fundamental", "ev_financial", created_at))
+        for metric in financial_data.valuation_metrics.metrics:
+            evidence.append(self._metric_evidence(metric, "valuation", "ev_valuation", created_at))
+        if financial_data.financial_statements.availability_status == FinancialDataAvailability.UNAVAILABLE:
+            evidence.append(
+                self._evidence(
+                    "ev_financial_statements_unavailable",
+                    "fundamental",
+                    "Full financial statements",
+                    "Full statement history is not available through the current financial-data adapter.",
+                    None,
+                    EvidenceSourceType.UNAVAILABLE_SOURCE,
+                    "not_connected",
+                    created_at,
+                    EvidenceKind.UNAVAILABLE_INFORMATION,
+                    EvidenceAvailabilityStatus.UNAVAILABLE,
+                    confidence=0,
+                    limitation="Income statement, balance sheet, and cash-flow statement history are unavailable.",
+                    source_metadata=financial_data.financial_statements.source,
+                    freshness=FreshnessStatus.UNAVAILABLE,
+                )
+            )
+        return evidence
+
+    def _metric_evidence(
+        self,
+        metric: FinancialMetric,
+        category: str,
+        prefix: str,
+        created_at: str,
+    ) -> EvidenceItem:
+        title = metric.name.replace("_", " ")
+        period = metric.period.period_end or metric.source.period_end
+        summary = f"{title} was normalized from {metric.source.provider}."
+        if metric.reported_or_derived == "derived" and metric.formula:
+            summary = f"{title} was derived using {metric.formula}."
+        return self._evidence(
+            f"{prefix}_{metric.name}",
+            category,
+            title,
+            summary,
+            metric.value,
+            EvidenceSourceType.INTERNAL_CALCULATION if metric.reported_or_derived == "derived" else self._source_type_from_metadata(metric.source),
+            metric.source.provider,
+            metric.source.observed_at or period or created_at,
+            EvidenceKind.DERIVED_CALCULATION if metric.reported_or_derived == "derived" else EvidenceKind.FACTUAL_DATA,
+            self._availability_from_financial(metric.availability_status),
+            confidence=0.68 if metric.reported_or_derived == "reported" else 0.58,
+            limitation=None if metric.value is not None else "Metric value is unavailable.",
+            source_metadata=metric.source,
+            freshness=self._freshness_from_financial(metric.source.period_end and FinancialDataFreshness.CURRENT or FinancialDataFreshness.UNKNOWN),
+            formula=metric.formula,
+            period_end=period,
+        )
+
     def _build_plan(
         self,
         collected_data: dict,
@@ -390,8 +540,31 @@ class ResearchPipelineService:
         history: pd.DataFrame = collected_data.get("price_history", pd.DataFrame())
         fundamentals = collected_data.get("fundamentals", {})
         company_profile = collected_data.get("company_profile", {})
+        financial_data = self._financial_snapshot(collected_data)
         news_is_placeholder = "placeholder" in news.explanation.lower() or "mock" in news.explanation.lower()
         macro_is_placeholder = "placeholder" in " ".join([macro.explanation, *macro.risks]).lower()
+        profile_status = (
+            self._dimension_status_from_financial(financial_data.company_profile.availability_status)
+            if financial_data
+            else ResearchDimensionStatus.AVAILABLE if company_profile else ResearchDimensionStatus.PARTIALLY_AVAILABLE
+        )
+        fundamentals_status = (
+            self._dimension_status_from_financial(financial_data.financial_metrics.availability_status)
+            if financial_data
+            else ResearchDimensionStatus.PARTIALLY_AVAILABLE if fundamentals else ResearchDimensionStatus.UNAVAILABLE
+        )
+        valuation_status = (
+            self._dimension_status_from_financial(financial_data.valuation_metrics.availability_status)
+            if financial_data
+            else ResearchDimensionStatus.PARTIALLY_AVAILABLE
+            if any(key in fundamentals for key in ["forward_pe", "trailing_pe", "price_to_sales"])
+            else ResearchDimensionStatus.UNAVAILABLE
+        )
+        technical_status = (
+            self._dimension_status_from_financial(financial_data.price_history.availability_status)
+            if financial_data
+            else ResearchDimensionStatus.AVAILABLE if len(history) >= 60 else ResearchDimensionStatus.PARTIALLY_AVAILABLE
+        )
         return ResearchPlan(
             plan_id=f"plan_{uuid4().hex[:10]}",
             dimensions=[
@@ -404,32 +577,33 @@ class ResearchPipelineService:
                 ),
                 ResearchPlanDimension(
                     name="company_or_instrument_overview",
-                    status=ResearchDimensionStatus.AVAILABLE if company_profile else ResearchDimensionStatus.PARTIALLY_AVAILABLE,
-                    description="Company profile metadata is available when the active provider returns it.",
-                    available_sources=["data_provider.company_profile"] if company_profile else [],
-                    limitations=[] if company_profile else ["Company profile is incomplete."],
+                    status=profile_status,
+                    description="Company profile metadata is normalized from the active financial data provider when available.",
+                    available_sources=["financial_data.company_profile"] if company_profile else [],
+                    limitations=[] if profile_status == ResearchDimensionStatus.AVAILABLE else ["Company profile is incomplete or unavailable."],
                 ),
                 ResearchPlanDimension(
                     name="fundamentals",
-                    status=ResearchDimensionStatus.PARTIALLY_AVAILABLE if fundamentals else ResearchDimensionStatus.UNAVAILABLE,
-                    description="Simplified fundamental metrics are available, but filing-level coverage is not connected.",
-                    available_sources=["data_provider.fundamentals"] if fundamentals else [],
-                    limitations=fundamental.risks,
+                    status=fundamentals_status,
+                    description="Basic normalized financial metrics are available only when the active provider returns usable values.",
+                    available_sources=["financial_data.financial_metrics"] if fundamentals_status != ResearchDimensionStatus.UNAVAILABLE else [],
+                    limitations=[*fundamental.risks, *self._snapshot_warnings(financial_data, "financial_metrics")],
                 ),
                 ResearchPlanDimension(
                     name="valuation",
-                    status=ResearchDimensionStatus.PARTIALLY_AVAILABLE
-                    if any(key in fundamentals for key in ["forward_pe", "trailing_pe", "price_to_sales"])
-                    else ResearchDimensionStatus.UNAVAILABLE,
-                    description="Only simple valuation proxies are available when returned by the provider.",
-                    available_sources=["fundamental_metrics"] if fundamentals else [],
-                    limitations=["No DCF, comparable-company set, segment model, or analyst estimates are connected."],
+                    status=valuation_status,
+                    description="Provider-reported or transparently derived valuation metrics are used when available.",
+                    available_sources=["financial_data.valuation_metrics"] if valuation_status != ResearchDimensionStatus.UNAVAILABLE else [],
+                    limitations=[
+                        "No DCF, comparable-company set, segment model, or analyst estimates are connected.",
+                        *self._snapshot_warnings(financial_data, "valuation_metrics"),
+                    ],
                 ),
                 ResearchPlanDimension(
                     name="price_and_technical_behavior",
-                    status=ResearchDimensionStatus.AVAILABLE if len(history) >= 60 else ResearchDimensionStatus.PARTIALLY_AVAILABLE,
+                    status=technical_status,
                     description="Technical indicators are calculated from available OHLCV history.",
-                    available_sources=["price_history", "technical_analysis_agent"] if not history.empty else [],
+                    available_sources=["financial_data.price_history", "technical_analysis_agent"] if not history.empty else [],
                     limitations=technical.risks,
                 ),
                 ResearchPlanDimension(
@@ -493,26 +667,27 @@ class ResearchPipelineService:
         return [
             SpecialistResearchOutput(
                 module_name="fundamental_analysis",
-                status=ResearchDimensionStatus.PARTIALLY_AVAILABLE,
+                status=ResearchDimensionStatus.AVAILABLE
+                if any(item.availability_status == EvidenceAvailabilityStatus.AVAILABLE for item in evidence if item.category == "fundamental")
+                else ResearchDimensionStatus.UNAVAILABLE,
                 conclusion=fundamental.explanation,
                 supporting_evidence_ids=fundamental_ids,
-                assumptions=["Provider metrics are treated as a simplified snapshot."],
-                limitations=fundamental.risks + ["Latest filings and full financial statement history are not connected."],
-                missing_inputs=["Latest filing", "Full income statement", "Cash-flow statement", "Balance sheet details"],
+                assumptions=["Provider metrics are treated as a normalized snapshot with explicit provenance."],
+                limitations=fundamental.risks + ["Full filing-level financial statement history is not connected."],
+                missing_inputs=["Full income statement", "Cash-flow statement", "Balance sheet details"],
                 confidence=fundamental.confidence,
             ),
             SpecialistResearchOutput(
                 module_name="valuation_analysis",
-                status=ResearchDimensionStatus.PARTIALLY_AVAILABLE
-                if any(item.availability_status != EvidenceAvailabilityStatus.UNAVAILABLE for item in valuation_items)
+                status=ResearchDimensionStatus.AVAILABLE
+                if any(item.availability_status == EvidenceAvailabilityStatus.AVAILABLE for item in valuation_items)
                 else ResearchDimensionStatus.UNAVAILABLE,
-                conclusion="Valuation view is limited to simple provider metrics; no full valuation model is connected.",
-                supporting_evidence_ids=fundamental_ids,
-                opposing_evidence_ids=valuation_ids,
+                conclusion="Valuation view is limited to available provider-reported or transparently derived metrics; no target price is generated.",
+                supporting_evidence_ids=valuation_ids,
                 assumptions=["Simple valuation ratios are not sufficient for a complete valuation conclusion."],
                 limitations=["DCF, scenario analysis, peer multiples, and estimate revisions are unavailable."],
                 missing_inputs=["Comparable company set", "Forward estimates", "Discount-rate assumptions", "Segment-level forecasts"],
-                confidence=0.28,
+                confidence=0.5 if valuation_ids else 0.15,
             ),
             SpecialistResearchOutput(
                 module_name="technical_analysis",
@@ -892,8 +1067,15 @@ class ResearchPipelineService:
         *,
         confidence: float,
         limitation: str | None,
+        source_metadata: DataSourceMetadata | None = None,
+        freshness: FreshnessStatus | None = None,
+        period_start: str | None = None,
+        period_end: str | None = None,
+        formula: str | None = None,
     ) -> EvidenceItem:
-        freshness = FreshnessStatus.FRESH if availability_status == EvidenceAvailabilityStatus.AVAILABLE else FreshnessStatus.UNKNOWN
+        resolved_freshness = freshness or (
+            FreshnessStatus.FRESH if availability_status == EvidenceAvailabilityStatus.AVAILABLE else FreshnessStatus.UNKNOWN
+        )
         return EvidenceItem(
             evidence_id=evidence_id,
             category=category,
@@ -902,9 +1084,20 @@ class ResearchPipelineService:
             value=value,
             source_type=source_type,
             source_name=source_name,
-            source_reference=None,
-            observed_at=observed_at,
-            freshness_status=freshness,
+            source_reference=source_metadata.source_reference if source_metadata else None,
+            provider_symbol=source_metadata.provider_symbol if source_metadata else None,
+            observed_at=source_metadata.observed_at or observed_at if source_metadata else observed_at,
+            fetched_at=source_metadata.fetched_at if source_metadata else None,
+            period_start=period_start or (source_metadata.period_start if source_metadata else None),
+            period_end=period_end or (source_metadata.period_end if source_metadata else None),
+            currency=source_metadata.currency if source_metadata else None,
+            delayed=source_metadata.delayed if source_metadata else False,
+            delayed_by=source_metadata.delayed_by if source_metadata else None,
+            transformation_type=source_metadata.transformation_type if source_metadata else None,
+            is_derived=bool(source_metadata.is_derived) if source_metadata else evidence_kind == EvidenceKind.DERIVED_CALCULATION,
+            formula=formula or (source_metadata.formula if source_metadata else None),
+            warnings=source_metadata.warnings if source_metadata else [],
+            freshness_status=resolved_freshness,
             confidence=max(0, min(1, confidence)),
             availability_status=availability_status,
             error_or_limitation=limitation,
@@ -942,6 +1135,84 @@ class ResearchPipelineService:
         if str(quality).upper() in {"DEGRADED", "UNAVAILABLE"}:
             return EvidenceSourceType.EXISTING_MARKET_DATA_SERVICE
         return EvidenceSourceType.EXISTING_APPLICATION_DATA
+
+    def _source_type_from_metadata(self, source: DataSourceMetadata) -> EvidenceSourceType:
+        if source.source_type.value == "mock_data":
+            return EvidenceSourceType.MOCK_DATA
+        if source.source_type.value == "unavailable_source":
+            return EvidenceSourceType.UNAVAILABLE_SOURCE
+        return EvidenceSourceType.EXISTING_MARKET_DATA_SERVICE
+
+    def _financial_snapshot(self, collected_data: dict) -> FinancialDataSnapshot | None:
+        raw = collected_data.get("financial_data")
+        if raw is None:
+            return None
+        if isinstance(raw, FinancialDataSnapshot):
+            return raw
+        try:
+            return FinancialDataSnapshot.model_validate(raw)
+        except Exception:
+            return None
+
+    def _availability_from_financial(self, status: FinancialDataAvailability) -> EvidenceAvailabilityStatus:
+        if status == FinancialDataAvailability.AVAILABLE:
+            return EvidenceAvailabilityStatus.AVAILABLE
+        if status in {FinancialDataAvailability.PARTIAL, FinancialDataAvailability.STALE_CACHE}:
+            return EvidenceAvailabilityStatus.PARTIAL
+        if status == FinancialDataAvailability.FAILED:
+            return EvidenceAvailabilityStatus.FAILED
+        return EvidenceAvailabilityStatus.UNAVAILABLE
+
+    def _freshness_from_financial(self, status: FinancialDataFreshness | None) -> FreshnessStatus:
+        if status is None:
+            return FreshnessStatus.UNKNOWN
+        mapping = {
+            FinancialDataFreshness.CURRENT: FreshnessStatus.CURRENT,
+            FinancialDataFreshness.DELAYED: FreshnessStatus.DELAYED,
+            FinancialDataFreshness.STALE: FreshnessStatus.STALE,
+            FinancialDataFreshness.MATERIALLY_STALE: FreshnessStatus.MATERIALLY_STALE,
+            FinancialDataFreshness.PARTIAL: FreshnessStatus.PARTIAL,
+            FinancialDataFreshness.UNKNOWN: FreshnessStatus.UNKNOWN,
+            FinancialDataFreshness.UNAVAILABLE: FreshnessStatus.UNAVAILABLE,
+        }
+        return mapping.get(status, FreshnessStatus.UNKNOWN)
+
+    def _dimension_status_from_financial(self, status: FinancialDataAvailability) -> ResearchDimensionStatus:
+        if status == FinancialDataAvailability.AVAILABLE:
+            return ResearchDimensionStatus.AVAILABLE
+        if status in {FinancialDataAvailability.PARTIAL, FinancialDataAvailability.STALE_CACHE}:
+            return ResearchDimensionStatus.PARTIALLY_AVAILABLE
+        if status == FinancialDataAvailability.FAILED:
+            return ResearchDimensionStatus.FAILED
+        return ResearchDimensionStatus.UNAVAILABLE
+
+    def _snapshot_warnings(self, snapshot: FinancialDataSnapshot | None, component: str) -> list[str]:
+        if snapshot is None:
+            return []
+        target = getattr(snapshot, component, None)
+        if target is None:
+            return []
+        return list(getattr(target, "warnings", []))
+
+    def _normalized_financial_keys(self, snapshot: FinancialDataSnapshot | None) -> set[str]:
+        if snapshot is None:
+            return set()
+        keys = {metric.name for metric in snapshot.financial_metrics.metrics}
+        keys.update(metric.name for metric in snapshot.valuation_metrics.metrics)
+        keys.update({"revenue_growth", "profit_margins", "trailing_pe", "forward_pe"})
+        return keys
+
+    def _max_drawdown_from_bars(self, bars) -> float | None:
+        closes = [bar.close for bar in bars if bar.close is not None]
+        if len(closes) < 2:
+            return None
+        peak = closes[0]
+        max_drawdown = 0.0
+        for close in closes:
+            peak = max(peak, close)
+            if peak:
+                max_drawdown = min(max_drawdown, (close / peak) - 1)
+        return round(max_drawdown, 6)
 
     def _ids_by_category(self, evidence: list[EvidenceItem], category: str) -> list[str]:
         return [item.evidence_id for item in evidence if item.category == category]

@@ -43,9 +43,14 @@ class EvidenceAvailabilityStatus(StrEnum):
 
 class FreshnessStatus(StrEnum):
     FRESH = "fresh"
+    CURRENT = "current"
+    DELAYED = "delayed"
     STALE = "stale"
+    MATERIALLY_STALE = "materially_stale"
+    PARTIAL = "partial"
     UNKNOWN = "unknown"
     NOT_APPLICABLE = "not_applicable"
+    UNAVAILABLE = "unavailable"
 
 
 class ConfidenceLevel(StrEnum):
@@ -101,9 +106,18 @@ class EvidenceItem(BaseModel):
     source_type: EvidenceSourceType
     source_name: str
     source_reference: str | None = None
+    provider_symbol: str | None = None
     observed_at: str
+    fetched_at: str | None = None
     period_start: str | None = None
     period_end: str | None = None
+    currency: str | None = None
+    delayed: bool = False
+    delayed_by: str | None = None
+    transformation_type: str | None = None
+    is_derived: bool = False
+    formula: str | None = None
+    warnings: list[str] = Field(default_factory=list)
     freshness_status: FreshnessStatus
     confidence: float = Field(ge=0, le=1)
     availability_status: EvidenceAvailabilityStatus

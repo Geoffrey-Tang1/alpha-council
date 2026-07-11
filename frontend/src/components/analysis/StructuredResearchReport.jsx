@@ -150,6 +150,7 @@ export default function StructuredResearchReport({ report }) {
               </div>
               <p>{item.summary}</p>
               {item.error_or_limitation && <p className="muted">{item.error_or_limitation}</p>}
+              <EvidenceMetadata item={item} />
               <small>{item.evidence_id} · {sourceTypeLabel(t, item.source_type)} · {item.source_name}</small>
             </article>
           ))}
@@ -270,8 +271,41 @@ function EvidenceBadges({ item }) {
   return (
     <span className="evidence-badges">
       <Badge tone={availabilityTone(item.availability_status)}>{availabilityLabel(t, item.availability_status)}</Badge>
+      <Badge tone={freshnessTone(item.freshness_status)}>{freshnessLabel(t, item.freshness_status)}</Badge>
+      {item.delayed && <Badge tone="warning">{t("research.delayedData")}</Badge>}
       <Badge tone="neutral">{sourceTypeLabel(t, item.source_type)}</Badge>
     </span>
+  );
+}
+
+function EvidenceMetadata({ item }) {
+  const { t } = useTranslation();
+  const fields = [
+    [t("research.providerSymbol"), item.provider_symbol],
+    [t("research.currency"), item.currency],
+    [t("research.observedAt"), item.observed_at],
+    [t("research.fetchedAt"), item.fetched_at],
+    [t("research.reportingPeriod"), item.period_end],
+    [t("research.transformation"), item.transformation_type],
+    [t("research.formula"), item.formula],
+    [t("research.delayedBy"), item.delayed_by]
+  ].filter(([, value]) => value !== undefined && value !== null && value !== "");
+
+  if (!fields.length && !(item.warnings || []).length) {
+    return null;
+  }
+
+  return (
+    <div className="evidence-metadata">
+      {fields.map(([label, value]) => (
+        <span key={`${label}-${value}`}>
+          <strong>{label}:</strong> {String(value)}
+        </span>
+      ))}
+      {(item.warnings || []).map((warning) => (
+        <span key={warning} className="warning-text">{warning}</span>
+      ))}
+    </div>
   );
 }
 
@@ -286,6 +320,13 @@ function availabilityTone(status) {
   if (status === "available") return "success";
   if (status === "partial") return "warning";
   if (status === "unavailable" || status === "failed") return "danger";
+  return "neutral";
+}
+
+function freshnessTone(status) {
+  if (status === "fresh" || status === "current") return "success";
+  if (status === "delayed" || status === "partial" || status === "unknown") return "warning";
+  if (status === "stale" || status === "materially_stale" || status === "unavailable") return "danger";
   return "neutral";
 }
 
@@ -308,6 +349,10 @@ function statusLabel(t, status) {
 
 function availabilityLabel(t, status) {
   return t(`research.availability.${status}`, { defaultValue: status || "N/A" });
+}
+
+function freshnessLabel(t, status) {
+  return t(`research.freshnessStatuses.${status}`, { defaultValue: status || "N/A" });
 }
 
 function sourceTypeLabel(t, sourceType) {

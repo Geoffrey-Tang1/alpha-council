@@ -1,7 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import analysis, backtests, data_sources, decisions, evaluations, health, llm, market_status, watchlist
+from app.api.routes import (
+    analysis,
+    backtests,
+    data_sources,
+    decisions,
+    evaluations,
+    financial_data,
+    health,
+    llm,
+    market_status,
+    watchlist,
+)
 from app.core.config import settings
 from app.db.database import initialize_database
 
@@ -32,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(analysis.router, prefix="/api/v1")
     app.include_router(decisions.router, prefix="/api/v1")
     app.include_router(data_sources.router, prefix="/api/v1")
+    app.include_router(financial_data.router, prefix="/api/v1")
     app.include_router(watchlist.router, prefix="/api/v1")
     app.include_router(backtests.router, prefix="/api/v1")
     app.include_router(evaluations.router, prefix="/api/v1")

@@ -194,6 +194,8 @@ Copy `backend/.env.example` to `backend/.env` for local development:
 APP_ENV=development
 DATABASE_URL=sqlite:///./alphacouncil.db
 DATA_PROVIDER=mock
+FINANCIAL_DATA_PROVIDER=auto
+FINANCIAL_DATA_CACHE_ENABLED=true
 ENABLE_LIVE_TRADING=false
 ```
 
@@ -202,6 +204,33 @@ Provider options:
 ```text
 DATA_PROVIDER=mock
 DATA_PROVIDER=yfinance
+```
+
+Financial-data foundation options:
+
+```text
+FINANCIAL_DATA_PROVIDER=auto
+FINANCIAL_DATA_PROVIDER=disabled
+FINANCIAL_DATA_CACHE_ENABLED=true
+FINANCIAL_DATA_QUOTE_TTL_SECONDS=60
+FINANCIAL_DATA_HISTORY_TTL_SECONDS=1800
+FINANCIAL_DATA_PROFILE_TTL_SECONDS=86400
+FINANCIAL_DATA_FINANCIAL_METRICS_TTL_SECONDS=21600
+FINANCIAL_DATA_VALUATION_METRICS_TTL_SECONDS=900
+```
+
+`FINANCIAL_DATA_PROVIDER=auto` reuses the active `DATA_PROVIDER` and normalizes quote, daily history, company profile, basic metrics, valuation metrics, provenance, freshness, and warnings for the structured research report. In this phase the optional real provider path is yfinance-backed; it may be delayed, incomplete, adjusted, throttled, or unavailable and is not an exchange-certified real-time feed. Missing filings, verified news, macro feeds, peer comparisons, target prices, and DCF inputs remain explicitly unavailable.
+
+Provider-neutral financial-data endpoints include:
+
+```text
+GET /api/v1/financial-data/status
+GET /api/v1/financial-data/instruments/resolve?ticker=NVDA&market=US
+GET /api/v1/financial-data/quote?ticker=NVDA&market=US
+GET /api/v1/financial-data/history?ticker=NVDA&market=US
+GET /api/v1/financial-data/company-profile?ticker=NVDA&market=US
+GET /api/v1/financial-data/financial-metrics?ticker=NVDA&market=US
+GET /api/v1/financial-data/valuation-metrics?ticker=NVDA&market=US
 ```
 
 Ticker examples for yfinance mode:

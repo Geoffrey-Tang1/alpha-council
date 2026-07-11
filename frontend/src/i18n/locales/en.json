@@ -273,7 +273,20 @@
       "available": "Available",
       "partial": "Partial",
       "unavailable": "Unavailable",
-      "failed": "Failed"
+      "unsupported": "Unsupported",
+      "failed": "Failed",
+      "stale_cache": "Stale cache"
+    },
+    "freshnessStatuses": {
+      "fresh": "Fresh",
+      "current": "Current",
+      "delayed": "Delayed",
+      "stale": "Stale",
+      "materially_stale": "Materially stale",
+      "partial": "Partial",
+      "unknown": "Unknown",
+      "not_applicable": "Not applicable",
+      "unavailable": "Unavailable"
     },
     "confidenceLevels": {
       "low": "Low",
@@ -293,7 +306,17 @@
       "model_inference": "Model inference",
       "mock_data": "Mock data",
       "unavailable_source": "Unavailable source"
-    }
+    },
+    "freshness": "Freshness",
+    "delayedData": "Delayed data",
+    "providerSymbol": "Provider symbol",
+    "currency": "Currency",
+    "observedAt": "Observed at",
+    "fetchedAt": "Fetched at",
+    "reportingPeriod": "Reporting period",
+    "transformation": "Transformation",
+    "formula": "Formula",
+    "delayedBy": "Delayed by"
   },
   "decisionCard": {
     "latestPrice": "Latest price",
@@ -416,6 +439,11 @@
     "resetComplete": "LLM settings reset to disabled.",
     "saved": "LLM settings saved.",
     "currentStatus": "Current Status",
+    "financialData": "Financial Data",
+    "financialDataHelp": "Financial data provider configuration is backend-only in this phase. API keys are never exposed to the frontend.",
+    "activeProvider": "Active provider",
+    "cacheEntries": "Cache entries",
+    "providerConfiguration": "Provider configuration",
     "currentProvider": "Current provider",
     "llmEnabled": "LLM enabled",
     "apiKeyPresent": "API key present",

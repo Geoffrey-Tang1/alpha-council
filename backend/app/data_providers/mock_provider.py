@@ -83,6 +83,12 @@ class MockDataProvider(MarketDataProvider):
             "operating_margin": round(0.12 + (seed % 18) / 100, 3),
             "debt_to_equity": round(0.15 + (seed % 60) / 100, 3),
             "free_cash_flow_margin": round(0.08 + (seed % 14) / 100, 3),
+            "market_cap": float(25_000_000_000 + (seed % 400) * 100_000_000),
+            "trailing_pe": round(18 + (seed % 25), 2),
+            "forward_pe": round(16 + (seed % 20), 2),
+            "price_to_sales": round(3 + (seed % 12) / 2, 2),
+            "price_to_book": round(2 + (seed % 10) / 2, 2),
+            "dividend_yield": round((seed % 4) / 100, 4),
             "valuation_label": "fair",
             "is_mock": True,
         }

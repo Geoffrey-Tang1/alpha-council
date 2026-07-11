@@ -33,6 +33,40 @@ export function getDataSourceStatus() {
   return request("/data-sources/status");
 }
 
+export function getFinancialDataStatus() {
+  return request("/financial-data/status");
+}
+
+export function resolveInstrument(params) {
+  const query = new URLSearchParams(params);
+  return request(`/financial-data/instruments/resolve?${query.toString()}`);
+}
+
+export function getFinancialQuote(params) {
+  const query = new URLSearchParams(params);
+  return request(`/financial-data/quote?${query.toString()}`);
+}
+
+export function getFinancialHistory(params) {
+  const query = new URLSearchParams(params);
+  return request(`/financial-data/history?${query.toString()}`);
+}
+
+export function getFinancialCompanyProfile(params) {
+  const query = new URLSearchParams(params);
+  return request(`/financial-data/company-profile?${query.toString()}`);
+}
+
+export function getFinancialMetrics(params) {
+  const query = new URLSearchParams(params);
+  return request(`/financial-data/financial-metrics?${query.toString()}`);
+}
+
+export function getValuationMetrics(params) {
+  const query = new URLSearchParams(params);
+  return request(`/financial-data/valuation-metrics?${query.toString()}`);
+}
+
 export function getLLMStatus() {
   return request("/llm/status");
 }

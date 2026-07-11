@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
+  getFinancialDataStatus,
   getLlmModels,
   getLlmSettings,
   refreshLlmModels,
@@ -87,6 +88,7 @@ export default function SettingsPage() {
   const [apiKeyChanged, setApiKeyChanged] = useState(false);
   const [customModel, setCustomModel] = useState("");
   const [modelCatalog, setModelCatalog] = useState(null);
+  const [financialStatus, setFinancialStatus] = useState(null);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsRefreshing, setModelsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -114,10 +116,27 @@ export default function SettingsPage() {
       const response = await getLlmSettings();
       applySettings(response);
       await loadModelCatalog(response.llm_provider, response.selected_model, false);
+      await loadFinancialStatus();
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadFinancialStatus() {
+    try {
+      const response = await getFinancialDataStatus();
+      setFinancialStatus(response);
+    } catch (err) {
+      setFinancialStatus({
+        provider: "unknown",
+        availability_status: "failed",
+        freshness_status: "unknown",
+        warnings: [err.message],
+        capabilities: [],
+        cache: {}
+      });
     }
   }
 
@@ -551,7 +570,54 @@ export default function SettingsPage() {
             </div>
           </dl>
         </Card>
+
+        <Card>
+          <div className="card-row">
+            <h3>{t("settings.financialData")}</h3>
+            <Badge tone={financialStatusTone(financialStatus?.availability_status)}>
+              {financialStatus?.availability_status || "unknown"}
+            </Badge>
+          </div>
+          <p className="muted">{t("settings.financialDataHelp")}</p>
+          <dl className="detail-list">
+            <div>
+              <dt>{t("settings.activeProvider")}</dt>
+              <dd>{financialStatus?.provider || "unknown"}</dd>
+            </div>
+            <div>
+              <dt>{t("research.freshness")}</dt>
+              <dd>{financialStatus?.freshness_status || "unknown"}</dd>
+            </div>
+            <div>
+              <dt>{t("settings.cacheEntries")}</dt>
+              <dd>{financialStatus?.cache?.entries ?? 0}</dd>
+            </div>
+            <div>
+              <dt>{t("settings.providerConfiguration")}</dt>
+              <dd>{financialStatus?.configuration?.provider_selection || "backend environment only"}</dd>
+            </div>
+          </dl>
+          <div className="evidence-chip-row">
+            {(financialStatus?.capabilities || []).map((capability) => (
+              <span className="evidence-chip" key={capability}>{capability}</span>
+            ))}
+          </div>
+          {(financialStatus?.warnings || []).length > 0 && (
+            <div className="warning-list">
+              {(financialStatus?.warnings || []).map((warning) => (
+                <p key={warning} className="data-disclaimer">{warning}</p>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
+}
+
+function financialStatusTone(status) {
+  if (status === "available") return "success";
+  if (status === "partial" || status === "stale_cache") return "warning";
+  if (status === "failed" || status === "unavailable" || status === "unsupported") return "danger";
+  return "neutral";
 }

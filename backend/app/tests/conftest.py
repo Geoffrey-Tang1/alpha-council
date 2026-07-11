@@ -18,6 +18,8 @@ if TEST_MODEL_CACHE.exists():
 
 os.environ["DATABASE_URL"] = "sqlite:///./test_alphacouncil.db"
 os.environ["DATA_PROVIDER"] = "mock"
+os.environ["FINANCIAL_DATA_PROVIDER"] = "auto"
+os.environ["FINANCIAL_DATA_CACHE_ENABLED"] = "true"
 os.environ["ENABLE_LIVE_TRADING"] = "false"
 os.environ["LLM_PROVIDER"] = "disabled"
 os.environ["ENABLE_LLM_REASONING"] = "false"
@@ -27,6 +29,7 @@ os.environ["LLM_SETTINGS_PATH"] = str(TEST_LLM_SETTINGS)
 os.environ["LLM_MODEL_CACHE_PATH"] = str(TEST_MODEL_CACHE)
 
 from app.main import app  # noqa: E402
+from app.financial_data.cache import GLOBAL_FINANCIAL_DATA_CACHE  # noqa: E402
 
 
 @pytest.fixture
@@ -36,11 +39,13 @@ def client():
 
 @pytest.fixture(autouse=True)
 def isolate_llm_settings_file():
+    GLOBAL_FINANCIAL_DATA_CACHE.clear()
     if TEST_LLM_SETTINGS.exists():
         TEST_LLM_SETTINGS.unlink()
     if TEST_MODEL_CACHE.exists():
         TEST_MODEL_CACHE.unlink()
     yield
+    GLOBAL_FINANCIAL_DATA_CACHE.clear()
     if TEST_LLM_SETTINGS.exists():
         TEST_LLM_SETTINGS.unlink()
     if TEST_MODEL_CACHE.exists():

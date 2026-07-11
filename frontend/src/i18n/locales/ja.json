@@ -273,7 +273,20 @@
       "available": "利用可能",
       "partial": "部分的",
       "unavailable": "利用不可",
-      "failed": "失敗"
+      "unsupported": "未対応",
+      "failed": "失敗",
+      "stale_cache": "古いキャッシュ"
+    },
+    "freshnessStatuses": {
+      "fresh": "新鮮",
+      "current": "最新",
+      "delayed": "遅延",
+      "stale": "古い",
+      "materially_stale": "かなり古い",
+      "partial": "部分的",
+      "unknown": "不明",
+      "not_applicable": "対象外",
+      "unavailable": "利用不可"
     },
     "confidenceLevels": {
       "low": "低",
@@ -293,7 +306,17 @@
       "model_inference": "モデル推論",
       "mock_data": "モックデータ",
       "unavailable_source": "利用不可ソース"
-    }
+    },
+    "freshness": "鮮度",
+    "delayedData": "遅延データ",
+    "providerSymbol": "プロバイダー銘柄",
+    "currency": "通貨",
+    "observedAt": "観測時刻",
+    "fetchedAt": "取得時刻",
+    "reportingPeriod": "報告期間",
+    "transformation": "変換",
+    "formula": "計算式",
+    "delayedBy": "遅延理由"
   },
   "decisionCard": {
     "latestPrice": "最新価格",
@@ -416,6 +439,11 @@
     "resetComplete": "LLM 設定を無効にリセットしました。",
     "saved": "LLM 設定を保存しました。",
     "currentStatus": "現在の状態",
+    "financialData": "金融データ",
+    "financialDataHelp": "この段階では金融データ設定はバックエンド環境のみで管理されます。APIキーはフロントエンドに公開されません。",
+    "activeProvider": "有効なプロバイダー",
+    "cacheEntries": "キャッシュ件数",
+    "providerConfiguration": "プロバイダー設定",
     "currentProvider": "現在の提供元",
     "llmEnabled": "LLM 有効",
     "apiKeyPresent": "API キーあり",

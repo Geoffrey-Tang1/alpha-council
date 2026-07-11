@@ -59,7 +59,8 @@ def test_research_report_marks_unavailable_dimensions_and_sources_honestly(clien
     assert unavailable["Latest filing"]["source_type"] == "unavailable_source"
     assert unavailable["Latest filing"]["source_reference"] is None
     assert report["missing_information"]
-    assert "valuation" in report["data_quality_summary"]["unavailable_dimensions"]
+    assert "Full financial statements" in unavailable
+    assert any(item["category"] == "valuation" for item in report["evidence"])
     assert not any("http" in str(item.get("source_reference")) for item in report["evidence"])
 
 

@@ -980,6 +980,30 @@ textarea::placeholder {
   margin: 0;
 }
 
+.evidence-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.evidence-metadata span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.evidence-metadata strong {
+  color: var(--text);
+}
+
+.warning-text {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
 .evidence-chip {
   border: 1px solid var(--line);
   border-radius: 999px;
