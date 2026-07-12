@@ -5,6 +5,7 @@ from app.financial_data.provider_registry import get_financial_data_adapter
 from app.financial_data.schemas import FinancialDataSnapshot
 from app.services.financial_data_service import FinancialDataService
 from app.services.market_status_service import MarketStatusService
+from app.services.news_research_service import NewsResearchService
 
 
 class DataCollectorAgent(BaseAgent):
@@ -15,15 +16,18 @@ class DataCollectorAgent(BaseAgent):
         provider: MarketDataProvider,
         market_status_service: MarketStatusService | None = None,
         financial_data_service: FinancialDataService | None = None,
+        news_research_service: NewsResearchService | None = None,
     ) -> None:
         self.provider = provider
         self.market_status_service = market_status_service or MarketStatusService()
         self.financial_data_service = financial_data_service or FinancialDataService(
             adapter=get_financial_data_adapter(provider)
         )
+        self.news_research_service = news_research_service or NewsResearchService()
 
     def collect(self, ticker: str, market: MarketCode) -> dict:
         financial_data = self.financial_data_service.get_research_snapshot(ticker=ticker, market=market)
+        news_research = self.news_research_service.get_sentiment_snapshot(ticker=ticker, market=market)
         price_history = self._price_history_dataframe(financial_data)
         latest_price = financial_data.quote.last_price
         fundamentals = self._legacy_fundamentals(financial_data)
@@ -35,7 +39,8 @@ class DataCollectorAgent(BaseAgent):
             "price_history": price_history,
             "company_profile": company_profile,
             "fundamentals": fundamentals,
-            "news": self.provider.get_news(ticker=ticker, market=market),
+            "news": self._legacy_news(news_research),
+            "news_research": news_research,
             "macro_context": self.provider.get_macro_context(market=market),
             "data_source_status": self.provider.get_data_source_status(),
             "market_status": self.market_status_service.get_market_status(market=market),
@@ -47,6 +52,27 @@ class DataCollectorAgent(BaseAgent):
         if history.empty:
             return history
         return history[["date", "open", "high", "low", "close", "volume"]]
+
+    def _legacy_news(self, news_research) -> list[dict]:
+        if not news_research.articles:
+            return [
+                {
+                    "headline": reason,
+                    "source": news_research.provider,
+                    "sentiment": news_research.sentiment_label,
+                    "is_mock": news_research.provider == "mock",
+                }
+                for reason in news_research.unavailable_reasons
+            ]
+        return [
+            {
+                "headline": article.title,
+                "source": article.provider,
+                "sentiment": news_research.sentiment_label,
+                "is_mock": article.source_type.value == "mock_data",
+            }
+            for article in news_research.articles
+        ]
 
     def _legacy_company_profile(self, financial_data: FinancialDataSnapshot) -> dict:
         profile = financial_data.company_profile

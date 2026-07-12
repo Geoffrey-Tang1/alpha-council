@@ -11,6 +11,7 @@ from app.api.routes import (
     health,
     llm,
     market_status,
+    news_research,
     watchlist,
 )
 from app.core.config import settings
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(backtests.router, prefix="/api/v1")
     app.include_router(evaluations.router, prefix="/api/v1")
     app.include_router(llm.router, prefix="/api/v1")
+    app.include_router(news_research.router, prefix="/api/v1")
     return app
 
 

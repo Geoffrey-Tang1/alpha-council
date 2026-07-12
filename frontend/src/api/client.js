@@ -37,6 +37,20 @@ export function getFinancialDataStatus() {
   return request("/financial-data/status");
 }
 
+export function getNewsResearchStatus() {
+  return request("/news-research/status");
+}
+
+export function getNewsResearchArticles(params) {
+  const query = new URLSearchParams(params);
+  return request(`/news-research/articles?${query.toString()}`);
+}
+
+export function getNewsResearchSentiment(params) {
+  const query = new URLSearchParams(params);
+  return request(`/news-research/sentiment?${query.toString()}`);
+}
+
 export function resolveInstrument(params) {
   const query = new URLSearchParams(params);
   return request(`/financial-data/instruments/resolve?${query.toString()}`);

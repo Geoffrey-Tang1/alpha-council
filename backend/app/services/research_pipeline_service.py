@@ -12,6 +12,12 @@ from app.financial_data.schemas import (
     FinancialMetric,
 )
 from app.llm.settings_store import get_llm_settings_response
+from app.news_research.schemas import (
+    NewsAvailability,
+    NewsFreshness,
+    NewsSentimentSnapshot,
+    NewsSourceType,
+)
 from app.schemas.agents import (
     BearCaseOutput,
     BullCaseOutput,
@@ -162,6 +168,10 @@ class ResearchPipelineService:
                 "financial_data_provider": financial_data.provider if (financial_data := self._financial_snapshot(collected_data)) else None,
                 "financial_data_availability": financial_data.availability_status if financial_data else None,
                 "financial_data_freshness": financial_data.freshness_status if financial_data else None,
+                "news_research_provider": news.provider,
+                "news_research_availability": news.availability,
+                "news_research_freshness": news.freshness,
+                "news_article_count": str(news.article_count),
                 "llm_provider": decision.llm_provider,
                 "llm_model": decision.llm_model,
                 "llm_used": decision.llm_used,
@@ -220,6 +230,9 @@ class ResearchPipelineService:
 
         if financial_data:
             evidence.extend(self._financial_evidence(financial_data, created_at))
+
+        news_snapshot = self._news_snapshot(collected_data)
+        evidence.extend(self._news_evidence(news_snapshot, news, created_at))
 
         if not history.empty:
             evidence.append(
@@ -392,11 +405,125 @@ class ResearchPipelineService:
         unavailable_sources = [
             ("ev_unavailable_filing", "fundamental", "Latest filing", "Latest company filing is not connected in this MVP."),
             ("ev_unavailable_valuation_model", "valuation", "Full valuation model", "Full valuation model inputs are unavailable."),
-            ("ev_unavailable_news_feed", "catalyst", "Verified news feed", "Dedicated verified news and announcements feed is unavailable."),
             ("ev_unavailable_macro_feed", "macro", "External macro feed", "Rates, FX, sector rotation, and macro calendar feeds are unavailable."),
         ]
         for evidence_id, category, title, summary in unavailable_sources:
             evidence.append(self._unavailable_evidence(evidence_id, category, title, summary, created_at))
+
+        return evidence
+
+    def _news_evidence(
+        self,
+        snapshot: NewsSentimentSnapshot | None,
+        news: NewsSentimentOutput,
+        created_at: str,
+    ) -> list[EvidenceItem]:
+        if snapshot is None:
+            return [
+                self._unavailable_evidence(
+                    "ev_unavailable_news_feed",
+                    "news_research",
+                    "Verified news feed",
+                    "News/research provider snapshot is unavailable.",
+                    created_at,
+                )
+            ]
+
+        evidence: list[EvidenceItem] = []
+        verified_articles = [article for article in snapshot.articles if article.is_verified_url and article.url]
+        article_source_type = self._news_source_type(snapshot.provider, snapshot.articles[0].source_type if snapshot.articles else None)
+        article_freshness = self._freshness_from_news(snapshot.freshness)
+        if snapshot.articles:
+            for index, article in enumerate(snapshot.articles, start=1):
+                reference = article.url if article.is_verified_url else None
+                warnings = list(dict.fromkeys([*article.warnings, *snapshot.warnings]))
+                evidence.append(
+                    EvidenceItem(
+                        evidence_id=f"ev_news_article_{index}",
+                        category="news_research",
+                        title=article.title,
+                        summary=article.summary or article.title,
+                        value=article.title,
+                        source_type=self._news_source_type(snapshot.provider, article.source_type),
+                        source_name=article.provider,
+                        source_reference=reference,
+                        provider_symbol=snapshot.symbol,
+                        observed_at=article.published_at or article.fetched_at,
+                        fetched_at=article.fetched_at,
+                        warnings=warnings,
+                        freshness_status=self._freshness_from_news(article.freshness),
+                        confidence=0.35 if article.source_type == NewsSourceType.MOCK_DATA else 0.7,
+                        availability_status=(
+                            EvidenceAvailabilityStatus.PARTIAL
+                            if article.availability == NewsAvailability.PARTIAL
+                            else self._availability_from_news(article.availability)
+                        ),
+                        error_or_limitation=(
+                            None
+                            if reference
+                            else "No verified external URL is available for this news/research item."
+                        ),
+                        evidence_kind=(
+                            EvidenceKind.UNAVAILABLE_INFORMATION
+                            if article.availability == NewsAvailability.UNAVAILABLE
+                            else EvidenceKind.FACTUAL_DATA
+                        ),
+                    )
+                )
+
+        unavailable_summary = (
+            "Dedicated verified news and announcements feed is unavailable."
+            if not verified_articles
+            else "Verified news URLs were available for at least one item."
+        )
+        evidence.append(
+            EvidenceItem(
+                evidence_id="ev_unavailable_news_feed",
+                category="news_research",
+                title="Verified news feed",
+                summary=unavailable_summary,
+                value=None,
+                source_type=EvidenceSourceType.UNAVAILABLE_SOURCE if not verified_articles else article_source_type,
+                source_name=snapshot.provider if verified_articles else "not_connected",
+                source_reference=None,
+                provider_symbol=snapshot.symbol,
+                observed_at=snapshot.fetched_at,
+                fetched_at=snapshot.fetched_at,
+                warnings=list(dict.fromkeys([*snapshot.warnings, *snapshot.unavailable_reasons])),
+                freshness_status=article_freshness if verified_articles else FreshnessStatus.UNAVAILABLE,
+                confidence=0.0 if not verified_articles else 0.5,
+                availability_status=EvidenceAvailabilityStatus.UNAVAILABLE if not verified_articles else EvidenceAvailabilityStatus.PARTIAL,
+                error_or_limitation=None if verified_articles else unavailable_summary,
+                evidence_kind=EvidenceKind.UNAVAILABLE_INFORMATION if not verified_articles else EvidenceKind.FACTUAL_DATA,
+            )
+        )
+
+        if news.sentiment_available:
+            evidence.append(
+                EvidenceItem(
+                    evidence_id="ev_news_sentiment_snapshot",
+                    category="news_research",
+                    title="News sentiment snapshot",
+                    summary=f"Sentiment label: {news.sentiment_label}; method: {news.sentiment_method}.",
+                    value=news.sentiment_label,
+                    source_type=article_source_type,
+                    source_name=news.provider,
+                    source_reference=None,
+                    provider_symbol=snapshot.symbol,
+                    observed_at=news.fetched_at or created_at,
+                    fetched_at=news.fetched_at,
+                    warnings=list(dict.fromkeys(news.warnings)),
+                    freshness_status=article_freshness,
+                    confidence=news.confidence,
+                    availability_status=EvidenceAvailabilityStatus.PARTIAL,
+                    error_or_limitation=(
+                        "Sentiment is mock/development-only and not derived from verified external news."
+                        if news.provider == "mock"
+                        else "Sentiment coverage may be incomplete."
+                    ),
+                    evidence_kind=EvidenceKind.MODEL_INFERENCE if news.provider != "mock" else EvidenceKind.FACTUAL_DATA,
+                )
+            )
 
         return evidence
 
@@ -541,7 +668,7 @@ class ResearchPipelineService:
         fundamentals = collected_data.get("fundamentals", {})
         company_profile = collected_data.get("company_profile", {})
         financial_data = self._financial_snapshot(collected_data)
-        news_is_placeholder = "placeholder" in news.explanation.lower() or "mock" in news.explanation.lower()
+        news_status = self._dimension_status_from_news(news.availability)
         macro_is_placeholder = "placeholder" in " ".join([macro.explanation, *macro.risks]).lower()
         profile_status = (
             self._dimension_status_from_financial(financial_data.company_profile.availability_status)
@@ -615,10 +742,10 @@ class ResearchPipelineService:
                 ),
                 ResearchPlanDimension(
                     name="catalysts",
-                    status=ResearchDimensionStatus.PARTIALLY_AVAILABLE if news_is_placeholder else ResearchDimensionStatus.AVAILABLE,
-                    description="Catalysts are surfaced from available news/sentiment placeholders or provider metadata.",
-                    available_sources=news.data_sources,
-                    limitations=news.risks,
+                    status=news_status,
+                    description="Catalysts and news context are available only when the news/research provider returns verified or clearly marked mock data.",
+                    available_sources=[f"news_research.{news.provider}", *news.data_sources] if news.provider else news.data_sources,
+                    limitations=list(dict.fromkeys([*news.risks, *news.unavailable_reasons])),
                 ),
                 ResearchPlanDimension(
                     name="risks",
@@ -662,7 +789,11 @@ class ResearchPipelineService:
         valuation_ids = [item.evidence_id for item in valuation_items]
         fundamental_ids = self._ids_by_category(evidence, "fundamental")
         technical_ids = self._ids_by_category(evidence, "technical")
-        catalyst_ids = self._ids_by_category(evidence, "catalyst")
+        catalyst_ids = [
+            item.evidence_id
+            for item in evidence
+            if item.category in {"catalyst", "news_research"}
+        ]
         macro_ids = self._ids_by_category(evidence, "macro")
         return [
             SpecialistResearchOutput(
@@ -711,12 +842,12 @@ class ResearchPipelineService:
             ),
             SpecialistResearchOutput(
                 module_name="catalyst_analysis",
-                status=ResearchDimensionStatus.PARTIALLY_AVAILABLE,
+                status=self._dimension_status_from_news(news.availability),
                 conclusion=news.explanation,
                 supporting_evidence_ids=catalyst_ids,
-                assumptions=["Catalysts are treated as placeholders unless a real news item is present."],
-                limitations=news.risks,
-                missing_inputs=["Verified news feed", "Earnings calendar", "Analyst revision feed"],
+                assumptions=["Catalysts require verified news or research sources before becoming high-confidence inputs."],
+                limitations=list(dict.fromkeys([*news.risks, *news.warnings])),
+                missing_inputs=list(dict.fromkeys([*news.unavailable_reasons, "Earnings calendar", "Analyst revision feed"])),
                 confidence=news.confidence,
             ),
             SpecialistResearchOutput(
@@ -830,13 +961,18 @@ class ResearchPipelineService:
             completeness = "partial"
         else:
             completeness = "broad"
+        evidence_warnings = [
+            warning
+            for item in evidence
+            for warning in item.warnings
+        ]
         return DataQualitySummary(
             overall_completeness=completeness,
             unavailable_dimensions=unavailable_dimensions,
             stale_evidence_count=sum(1 for item in evidence if item.freshness_status == FreshnessStatus.STALE),
             failed_modules=failed_modules,
             inference_heavy_sections=inference_sections,
-            warnings=list(dict.fromkeys([decision.data_disclaimer, *decision.data_warnings])),
+            warnings=list(dict.fromkeys([decision.data_disclaimer, *decision.data_warnings, *evidence_warnings])),
         )
 
     def _build_confidence(
@@ -1153,6 +1289,55 @@ class ResearchPipelineService:
             return FinancialDataSnapshot.model_validate(raw)
         except Exception:
             return None
+
+    def _news_snapshot(self, collected_data: dict) -> NewsSentimentSnapshot | None:
+        raw = collected_data.get("news_research")
+        if raw is None:
+            return None
+        if isinstance(raw, NewsSentimentSnapshot):
+            return raw
+        try:
+            return NewsSentimentSnapshot.model_validate(raw)
+        except Exception:
+            return None
+
+    def _news_source_type(self, provider: str, source_type: NewsSourceType | str | None) -> EvidenceSourceType:
+        normalized_source = source_type.value if isinstance(source_type, NewsSourceType) else str(source_type or "")
+        if provider == "mock" or normalized_source == NewsSourceType.MOCK_DATA.value:
+            return EvidenceSourceType.MOCK_DATA
+        if normalized_source == NewsSourceType.UNAVAILABLE_SOURCE.value:
+            return EvidenceSourceType.UNAVAILABLE_SOURCE
+        return EvidenceSourceType.EXISTING_APPLICATION_DATA
+
+    def _availability_from_news(self, status: NewsAvailability) -> EvidenceAvailabilityStatus:
+        if status == NewsAvailability.AVAILABLE:
+            return EvidenceAvailabilityStatus.AVAILABLE
+        if status == NewsAvailability.PARTIAL:
+            return EvidenceAvailabilityStatus.PARTIAL
+        if status == NewsAvailability.FAILED:
+            return EvidenceAvailabilityStatus.FAILED
+        return EvidenceAvailabilityStatus.UNAVAILABLE
+
+    def _freshness_from_news(self, status: NewsFreshness | str | None) -> FreshnessStatus:
+        normalized = status.value if isinstance(status, NewsFreshness) else str(status or "")
+        mapping = {
+            NewsFreshness.CURRENT.value: FreshnessStatus.CURRENT,
+            NewsFreshness.DELAYED.value: FreshnessStatus.DELAYED,
+            NewsFreshness.STALE.value: FreshnessStatus.STALE,
+            NewsFreshness.UNKNOWN.value: FreshnessStatus.UNKNOWN,
+            NewsFreshness.UNAVAILABLE.value: FreshnessStatus.UNAVAILABLE,
+            NewsFreshness.MOCK.value: FreshnessStatus.UNKNOWN,
+        }
+        return mapping.get(normalized, FreshnessStatus.UNKNOWN)
+
+    def _dimension_status_from_news(self, status: str) -> ResearchDimensionStatus:
+        if status == NewsAvailability.AVAILABLE.value:
+            return ResearchDimensionStatus.AVAILABLE
+        if status == NewsAvailability.PARTIAL.value:
+            return ResearchDimensionStatus.PARTIALLY_AVAILABLE
+        if status == NewsAvailability.FAILED.value:
+            return ResearchDimensionStatus.FAILED
+        return ResearchDimensionStatus.UNAVAILABLE
 
     def _availability_from_financial(self, status: FinancialDataAvailability) -> EvidenceAvailabilityStatus:
         if status == FinancialDataAvailability.AVAILABLE:

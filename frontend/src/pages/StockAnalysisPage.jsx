@@ -198,8 +198,22 @@ export default function StockAnalysisPage() {
               signal={decision.agent_outputs.news_sentiment.sentiment_signal}
               confidence={decision.agent_outputs.news_sentiment.confidence}
               explanation={decision.agent_outputs.news_sentiment.explanation}
-              details={{ catalysts: decision.agent_outputs.news_sentiment.catalysts.join(", ") }}
-              risks={decision.agent_outputs.news_sentiment.risks}
+              details={{
+                provider: decision.agent_outputs.news_sentiment.provider,
+                article_count: decision.agent_outputs.news_sentiment.article_count,
+                availability: decision.agent_outputs.news_sentiment.availability,
+                freshness: decision.agent_outputs.news_sentiment.freshness,
+                sentiment_available: decision.agent_outputs.news_sentiment.sentiment_available ? "yes" : "no",
+                sentiment_label: decision.agent_outputs.news_sentiment.sentiment_label,
+                sentiment_method: decision.agent_outputs.news_sentiment.sentiment_method,
+                source_type: decision.agent_outputs.news_sentiment.source_type,
+                fetched_at: decision.agent_outputs.news_sentiment.fetched_at,
+                catalysts: decision.agent_outputs.news_sentiment.catalysts.join(", ")
+              }}
+              risks={[...new Set([
+                ...decision.agent_outputs.news_sentiment.risks,
+                ...(decision.agent_outputs.news_sentiment.unavailable_reasons || [])
+              ])]}
             />
             <SpecialistAgentCard
               title={t("analysis.macroCrossMarket")}

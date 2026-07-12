@@ -93,6 +93,8 @@ export default function StructuredResearchReport({ report }) {
         <List items={thesis?.catalysts} emptyText={t("research.noCatalysts")} />
       </Section>
 
+      <NewsResearchSection report={report} />
+
       <div className="research-module-grid">
         <ModuleSection title={t("research.valuationView")} output={thesis?.valuation_view} evidenceById={evidenceById} />
         <ModuleSection title={t("research.technicalView")} output={thesis?.technical_view} evidenceById={evidenceById} />
@@ -209,6 +211,53 @@ function ModuleSection({ title, output, evidenceById }) {
       <List title={t("research.limitations")} items={output?.limitations} />
       <List title={t("research.missingInputs")} items={output?.missing_inputs} />
       <EvidenceReferences ids={[...(output?.supporting_evidence_ids || []), ...(output?.opposing_evidence_ids || [])]} evidenceById={evidenceById} />
+    </Section>
+  );
+}
+
+function NewsResearchSection({ report }) {
+  const { t } = useTranslation();
+  const items = (report.evidence || []).filter((item) => item.category === "news_research");
+  const unavailableItems = items.filter((item) => item.availability_status === "unavailable");
+  const articleItems = items.filter((item) => item.evidence_id?.startsWith("ev_news_article_"));
+  const metadata = report.provider_metadata || {};
+
+  return (
+    <Section title={t("research.newsResearchSources")}>
+      <div className="research-grid">
+        <Metric label={t("common.provider")} value={metadata.news_research_provider || "unknown"} />
+        <Metric label={t("research.availabilityLabel")} value={metadata.news_research_availability || "unknown"} />
+        <Metric label={t("research.freshness")} value={metadata.news_research_freshness || "unknown"} />
+        <Metric label={t("research.articleCount")} value={metadata.news_article_count || articleItems.length} />
+      </div>
+      {articleItems.length === 0 && (
+        <p className="muted">{t("research.noVerifiedNewsSources")}</p>
+      )}
+      {unavailableItems.length > 0 && (
+        <div className="warning-list">
+          {unavailableItems.map((item) => (
+            <p key={item.evidence_id} className="data-disclaimer">
+              {item.summary}
+            </p>
+          ))}
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="evidence-list compact-evidence-list">
+          {items.map((item) => (
+            <article className="evidence-item" key={item.evidence_id}>
+              <div className="evidence-item-header">
+                <strong>{item.title}</strong>
+                <EvidenceBadges item={item} />
+              </div>
+              <p>{item.summary}</p>
+              {item.error_or_limitation && <p className="muted">{item.error_or_limitation}</p>}
+              <EvidenceMetadata item={item} />
+              <small>{item.evidence_id} · {sourceTypeLabel(t, item.source_type)} · {item.source_name}</small>
+            </article>
+          ))}
+        </div>
+      )}
     </Section>
   );
 }

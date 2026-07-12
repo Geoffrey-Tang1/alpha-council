@@ -26,6 +26,17 @@ class NewsSentimentOutput(BaseModel):
     catalysts: list[str]
     risks: list[str]
     data_sources: list[str]
+    provider: str = "unknown"
+    article_count: int = 0
+    fetched_at: str | None = None
+    availability: str = "unavailable"
+    freshness: str = "unknown"
+    sentiment_available: bool = False
+    sentiment_label: str = "unavailable"
+    sentiment_method: str = "not_computed"
+    source_type: str = "unavailable_source"
+    unavailable_reasons: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
 
 
 class MacroAnalysisOutput(BaseModel):

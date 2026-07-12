@@ -5,6 +5,7 @@ import {
   getFinancialDataStatus,
   getLlmModels,
   getLlmSettings,
+  getNewsResearchStatus,
   refreshLlmModels,
   testLlmConnection,
   updateLlmSettings
@@ -89,6 +90,7 @@ export default function SettingsPage() {
   const [customModel, setCustomModel] = useState("");
   const [modelCatalog, setModelCatalog] = useState(null);
   const [financialStatus, setFinancialStatus] = useState(null);
+  const [newsResearchStatus, setNewsResearchStatus] = useState(null);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsRefreshing, setModelsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -117,6 +119,7 @@ export default function SettingsPage() {
       applySettings(response);
       await loadModelCatalog(response.llm_provider, response.selected_model, false);
       await loadFinancialStatus();
+      await loadNewsResearchStatus();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -136,6 +139,23 @@ export default function SettingsPage() {
         warnings: [err.message],
         capabilities: [],
         cache: {}
+      });
+    }
+  }
+
+  async function loadNewsResearchStatus() {
+    try {
+      const response = await getNewsResearchStatus();
+      setNewsResearchStatus(response);
+    } catch (err) {
+      setNewsResearchStatus({
+        provider: "unknown",
+        enabled: false,
+        supports_live_news: false,
+        supports_sentiment: false,
+        cache_status: {},
+        warnings: [err.message],
+        unavailable_reasons: [err.message]
       });
     }
   }
@@ -605,6 +625,44 @@ export default function SettingsPage() {
           {(financialStatus?.warnings || []).length > 0 && (
             <div className="warning-list">
               {(financialStatus?.warnings || []).map((warning) => (
+                <p key={warning} className="data-disclaimer">{warning}</p>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <div className="card-row">
+            <h3>{t("settings.newsResearch")}</h3>
+            <Badge tone={newsResearchStatus?.enabled ? "success" : "warning"}>
+              {newsResearchStatus?.enabled ? t("settings.enabled") : t("settings.disabled")}
+            </Badge>
+          </div>
+          <p className="muted">{t("settings.newsResearchHelp")}</p>
+          <dl className="detail-list">
+            <div>
+              <dt>{t("settings.activeProvider")}</dt>
+              <dd>{newsResearchStatus?.provider || "unknown"}</dd>
+            </div>
+            <div>
+              <dt>{t("settings.liveNewsSupport")}</dt>
+              <dd>{newsResearchStatus?.supports_live_news ? t("llm.yes") : t("llm.no")}</dd>
+            </div>
+            <div>
+              <dt>{t("settings.sentimentSupport")}</dt>
+              <dd>{newsResearchStatus?.supports_sentiment ? t("llm.yes") : t("llm.no")}</dd>
+            </div>
+            <div>
+              <dt>{t("settings.cacheStatus")}</dt>
+              <dd>{newsResearchStatus?.cache_status?.enabled ? t("settings.enabled") : t("settings.disabled")}</dd>
+            </div>
+          </dl>
+          {[
+            ...(newsResearchStatus?.warnings || []),
+            ...(newsResearchStatus?.unavailable_reasons || [])
+          ].length > 0 && (
+            <div className="warning-list">
+              {[...new Set([...(newsResearchStatus?.warnings || []), ...(newsResearchStatus?.unavailable_reasons || [])])].map((warning) => (
                 <p key={warning} className="data-disclaimer">{warning}</p>
               ))}
             </div>
